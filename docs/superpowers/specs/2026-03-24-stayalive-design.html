@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StayAlive — Design Spec</title>
+  <style>
+    :root {
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --red: #dc2626;
+      --green: #16a34a;
+      --gray: #6b7280;
+      --gray-light: #f3f4f6;
+      --border: #e5e7eb;
+      --text: #111827;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .meta { color: var(--gray); font-size: 0.875rem; margin-bottom: 2.5rem; }
+    h2 { font-size: 1.25rem; font-weight: 700; margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--blue); color: var(--blue); }
+    h3 { font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+    p { margin-bottom: 0.75rem; }
+    ul, ol { margin: 0.5rem 0 0.75rem 1.5rem; }
+    li { margin-bottom: 0.25rem; }
+    code { font-family: "Cascadia Code", "Fira Code", monospace; font-size: 0.85em; background: var(--gray-light); padding: 0.1em 0.35em; border-radius: 3px; }
+    pre { background: var(--gray-light); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; overflow-x: auto; font-size: 0.85rem; margin: 0.75rem 0 1rem; font-family: "Cascadia Code", "Fira Code", monospace; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; margin: 0.75rem 0 1rem; font-size: 0.9rem; }
+    th { background: var(--gray-light); text-align: left; padding: 0.5rem 0.75rem; border: 1px solid var(--border); font-weight: 600; }
+    td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); vertical-align: top; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .badge { display: inline-block; padding: 0.15em 0.6em; border-radius: 999px; font-size: 0.78em; font-weight: 600; }
+    .badge-blue { background: var(--blue-light); color: var(--blue); }
+    .badge-green { background: #f0fdf4; color: var(--green); }
+    .badge-red { background: #fef2f2; color: var(--red); }
+    .decision-box { background: var(--blue-light); border-left: 4px solid var(--blue); padding: 0.75rem 1rem; margin: 0.75rem 0; border-radius: 0 6px 6px 0; }
+    .decision-box strong { color: var(--blue); }
+    .warning-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; margin: 0.75rem 0; border-radius: 0 6px 6px 0; }
+    .section-nav { background: var(--gray-light); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; }
+    .section-nav ol { margin: 0.25rem 0 0 1.25rem; }
+    .section-nav a { color: var(--blue); text-decoration: none; }
+    .section-nav a:hover { text-decoration: underline; }
+    .screen-mock { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin: 0.75rem 0 1rem; font-family: "Cascadia Code", "Fira Code", monospace; font-size: 0.82rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<h1>StayAlive — Design Spec</h1>
+<p class="meta">Versão 1.1 &nbsp;·&nbsp; 2026-03-24 &nbsp;·&nbsp; Status: <span class="badge badge-green">Aprovado</span></p>
+
+<div class="section-nav">
+  <strong>Índice</strong>
+  <ol>
+    <li><a href="#overview">Visão Geral</a></li>
+    <li><a href="#stack">Stack & Decisões de Arquitectura</a></li>
+    <li><a href="#data-model">Data Model & Auth</a></li>
+    <li><a href="#onboarding">Onboarding Wizard</a></li>
+    <li><a href="#dashboard">Dashboard & Navegação</a></li>
+    <li><a href="#csv-import">CSV Import Flow</a></li>
+    <li><a href="#projection">Lógica de Projeção</a></li>
+    <li><a href="#open-questions">Questões em Aberto</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="overview">1. Visão Geral</h2>
+
+<p>StayAlive responde à pergunta central:</p>
+<blockquote style="border-left:4px solid var(--border);padding:0.5rem 1rem;margin:0.75rem 0;color:var(--gray);font-style:italic;">
+  "Se eu gastar X hoje, vou ficar a negativo nos próximos 30 dias?"
+</blockquote>
+
+<p>A app permite ao utilizador:</p>
+<ul>
+  <li>Introduzir o saldo bancário atual manualmente</li>
+  <li>Importar extratos bancários em CSV (CGD, Millennium, Santander, Novo Banco, BPI)</li>
+  <li>Categorizar transações automaticamente via regras keyword</li>
+  <li>Registar despesas fixas e rendimentos recorrentes</li>
+  <li>Ver uma projeção diária de saldo a 30 dias</li>
+  <li>Simular um gasto em tempo real sem escrever na base de dados</li>
+</ul>
+
+<div class="decision-box">
+  <strong>Público-alvo:</strong> utilizador individual (single-user), contexto mobile on-the-go.<br>
+  <strong>MVP scope:</strong> 1 conta bancária por utilizador; sem sincronização automática com bancos.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="stack">2. Stack & Decisões de Arquitectura</h2>
+
+<table>
+  <tr><th>Camada</th><th>Tecnologia</th><th>Razão</th></tr>
+  <tr><td>Frontend</td><td>Next.js 14 App Router</td><td>SSR + RSC, routing file-based, deploy Vercel trivial</td></tr>
+  <tr><td>Backend / DB</td><td>Supabase (PostgreSQL + RLS)</td><td>Auth pronta, RLS nativo, realtime opcional, free tier generoso</td></tr>
+  <tr><td>Auth</td><td>Google OAuth via Supabase Auth</td><td>Single-user MVP, sem gestão de passwords</td></tr>
+  <tr><td>CSV parsing</td><td>PapaParse</td><td>Client-side, zero servidor, suporta `;` e `,`</td></tr>
+  <tr><td>Deploy</td><td>Vercel</td><td>Integração nativa Next.js, CI/CD automático</td></tr>
+  <tr><td>Styling</td><td>Tailwind CSS</td><td>Utility-first, mobile-first out of the box</td></tr>
+  <tr><td>Charts</td><td>Recharts</td><td>React-native, simples, responsivo</td></tr>
+</table>
+
+<h3>Decisões de design visual</h3>
+<ul>
+  <li><strong>Mobile-first</strong> — contexto de uso primário é on-the-go</li>
+  <li><strong>Cor primária: Azul</strong> (<code>#2563eb</code>) — preferência explícita; referências usavam roxo mas foi overridden</li>
+  <li><strong>Light mode</strong> — todas as referências são light mode; dark mode é v2</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="data-model">3. Data Model & Auth</h2>
+
+<h3>Auth Flow</h3>
+<pre>User clica "Entrar com Google"
+  → Supabase Auth redireciona para Google
+  → Callback → sessão JWT gerada
+  → profiles row criado automaticamente (DB trigger)
+  → User entra no dashboard</pre>
+
+<ul>
+  <li>JWT guardado em cookie httpOnly; Next.js middleware valida em cada request</li>
+  <li>RLS em todas as tabelas: <code>USING (user_id = auth.uid())</code></li>
+</ul>
+
+<h3>Esquema de Tabelas</h3>
+
+<h4><code>profiles</code> — 1 row por utilizador</h4>
+<table>
+  <tr><th>Coluna</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>uuid PK</code></td><td>= <code>auth.users.id</code></td></tr>
+  <tr><td><code>balance</code></td><td><code>numeric</code></td><td>Saldo atual, introduzido manualmente</td></tr>
+  <tr><td><code>balance_updated_at</code></td><td><code>timestamptz</code></td><td>Atualizado sempre que <code>balance</code> muda; mostrado no Saldo card</td></tr>
+  <tr><td><code>currency</code></td><td><code>text</code></td><td>Default <code>'EUR'</code></td></tr>
+  <tr><td><code>created_at</code></td><td><code>timestamptz</code></td><td></td></tr>
+</table>
+
+<h4><code>transactions</code></h4>
+<table>
+  <tr><th>Coluna</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>uuid PK</code></td><td></td></tr>
+  <tr><td><code>user_id</code></td><td><code>uuid FK profiles</code></td><td></td></tr>
+  <tr><td><code>date</code></td><td><code>date</code></td><td></td></tr>
+  <tr><td><code>description</code></td><td><code>text</code></td><td></td></tr>
+  <tr><td><code>amount</code></td><td><code>numeric</code></td><td>Negativo = despesa, positivo = rendimento</td></tr>
+  <tr><td><code>category_id</code></td><td><code>uuid FK categories</code></td><td>Nullable</td></tr>
+  <tr><td><code>source</code></td><td><code>enum('csv','manual')</code></td><td></td></tr>
+  <tr><td><code>created_at</code></td><td><code>timestamptz</code></td><td></td></tr>
+</table>
+
+<h4><code>categories</code></h4>
+<table>
+  <tr><th>Coluna</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>uuid PK</code></td><td></td></tr>
+  <tr><td><code>user_id</code></td><td><code>uuid FK profiles</code></td><td></td></tr>
+  <tr><td><code>name</code></td><td><code>text</code></td><td></td></tr>
+  <tr><td><code>color</code></td><td><code>text</code></td><td>Hex color</td></tr>
+  <tr><td><code>type</code></td><td><code>enum('expense','income')</code></td><td></td></tr>
+  <tr><td><code>icon</code></td><td><code>text</code></td><td>Emoji ou nome de ícone</td></tr>
+</table>
+
+<h4><code>category_rules</code></h4>
+<table>
+  <tr><th>Coluna</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>uuid PK</code></td><td></td></tr>
+  <tr><td><code>user_id</code></td><td><code>uuid FK profiles</code></td><td></td></tr>
+  <tr><td><code>keyword</code></td><td><code>text</code></td><td>Case-insensitive substring match</td></tr>
+  <tr><td><code>category_id</code></td><td><code>uuid FK categories</code></td><td></td></tr>
+  <tr><td><code>priority</code></td><td><code>int</code></td><td>Maior = aplica primeiro</td></tr>
+</table>
+
+<h4><code>user_settings</code> — configurações por utilizador</h4>
+<table>
+  <tr><th>Coluna</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>user_id</code></td><td><code>uuid PK FK profiles</code></td><td></td></tr>
+  <tr><td><code>csv_column_date</code></td><td><code>text</code></td><td>Nome/índice da coluna Data no CSV</td></tr>
+  <tr><td><code>csv_column_description</code></td><td><code>text</code></td><td>Nome/índice da coluna Descrição</td></tr>
+  <tr><td><code>csv_column_amount</code></td><td><code>text</code></td><td>Nome/índice da coluna Valor</td></tr>
+  <tr><td><code>csv_negative_is_expense</code></td><td><code>boolean</code></td><td>Default <code>true</code></td></tr>
+  <tr><td><code>updated_at</code></td><td><code>timestamptz</code></td><td></td></tr>
+</table>
+<p>Persiste o mapeamento de CSV para que imports futuros saltem o Passo 2. Guardado no Supabase (não apenas em <code>localStorage</code>) para funcionar em múltiplos dispositivos.</p>
+
+<h4><code>recurring_items</code> — despesas fixas e rendimentos recorrentes</h4>
+<table>
+  <tr><th>Coluna</th><th>Tipo</th><th>Notas</th></tr>
+  <tr><td><code>id</code></td><td><code>uuid PK</code></td><td></td></tr>
+  <tr><td><code>user_id</code></td><td><code>uuid FK profiles</code></td><td></td></tr>
+  <tr><td><code>name</code></td><td><code>text</code></td><td></td></tr>
+  <tr><td><code>amount</code></td><td><code>numeric</code></td><td>Sempre positivo; <code>type</code> define o sinal</td></tr>
+  <tr><td><code>type</code></td><td><code>enum('expense','income')</code></td><td></td></tr>
+  <tr><td><code>frequency</code></td><td><code>enum('monthly','weekly','quinzenal','yearly')</code></td><td><code>quinzenal</code> = every 14 days (ex-<code>biweekly</code>)</td></tr>
+  <tr><td><code>day_of_month</code></td><td><code>int</code></td><td>Nullable; para monthly/yearly</td></tr>
+  <tr><td><code>day_of_week</code></td><td><code>int</code></td><td>Nullable; para weekly/biweekly (0=Dom)</td></tr>
+  <tr><td><code>next_date</code></td><td><code>date</code></td><td>Calculado; usado na projeção</td></tr>
+  <tr><td><code>active</code></td><td><code>boolean</code></td><td>Default <code>true</code></td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="onboarding">4. Onboarding Wizard</h2>
+
+<p>Wizard linear de 5 passos com barra de progresso no topo. Estado guardado em <code>localStorage</code> até ao passo final (commit para Supabase apenas no "Concluir"). Pode ser abandonado e retomado.</p>
+
+<pre>[ 1 Saldo ] → [ 2 CSV ] → [ 3 Mapeamento ] → [ 4 Categorias ] → [ 5 Fixas ] → Dashboard</pre>
+
+<p>Botão "Saltar" disponível em todos os passos exceto o Passo 1 (saldo é obrigatório).</p>
+
+<h3>Passo 1 — Saldo Atual</h3>
+<ul>
+  <li>Input numérico; aceita vírgula ou ponto decimal; pode ser negativo</li>
+  <li>Guardado em <code>profiles.balance</code></li>
+</ul>
+
+<h3>Passo 2 — Importar CSV</h3>
+<ul>
+  <li>Drag &amp; drop ou file picker; máx. 5MB</li>
+  <li>PapaParse detecta delimitador (<code>,</code> ou <code>;</code>) automaticamente</li>
+  <li>Preview da primeira linha após upload</li>
+  <li>Skipável — user pode importar mais tarde</li>
+</ul>
+
+<h3>Passo 3 — Mapeamento de Colunas</h3>
+<ul>
+  <li>Só aparece se CSV foi importado</li>
+  <li>Mostra primeiras 3 linhas do CSV; user mapeia: Data, Descrição, Valor</li>
+  <li>Opção "Sinal negativo = despesa" (checkbox, default marcado)</li>
+  <li>Preview ao vivo do resultado do mapeamento</li>
+  <li>Configuração guardada para imports futuros (skip automático)</li>
+</ul>
+
+<h3>Passo 4 — Categorias</h3>
+<ul>
+  <li>Categorias pré-definidas criadas automaticamente:
+    <ul>
+      <li>🛒 Supermercado (keywords: continente, pingo doce, lidl, aldi, mercadona)</li>
+      <li>🚗 Transportes (keywords: uber, bolt, cp, carris, metro)</li>
+      <li>📺 Subscrições (keywords: netflix, spotify, apple, amazon, disney)</li>
+      <li>📱 Telecomunicações (keywords: nos, meo, vodafone, nowo)</li>
+      <li>💰 Rendimento (keywords: salário, vencimento, ordenado)</li>
+    </ul>
+  </li>
+  <li>User pode renomear, mudar cor/ícone, ou criar novas</li>
+  <li>Regras keyword criadas silenciosamente em <code>category_rules</code></li>
+</ul>
+
+<h3>Passo 5 — Despesas Fixas</h3>
+<ul>
+  <li>Lista iniciada com "Renda / Hipoteca" como sugestão (vazia, não obrigatória)</li>
+  <li>Cada item: nome, valor, frequência (mensal/semanal/quinzenal/anual), dia</li>
+  <li><strong>Commit para Supabase apenas aqui</strong> no "Concluir" — incluindo <code>profiles.balance</code> do Passo 1; até lá tudo vive em <code>localStorage</code></li>
+  <li>Se o utilizador abandonar antes de "Concluir", é redirecionado para o wizard no próximo acesso (estado recuperado do <code>localStorage</code> se ainda presente)</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="dashboard">5. Dashboard & Navegação</h2>
+
+<h3>Navegação Global — Bottom Navigation Bar</h3>
+<table>
+  <tr><th>Tab</th><th>Ícone</th><th>Conteúdo</th></tr>
+  <tr><td>Home</td><td>🏠</td><td>Dashboard principal com projeção</td></tr>
+  <tr><td>Transações</td><td>📋</td><td>Lista completa, filtros, import CSV</td></tr>
+  <tr><td>Simular</td><td>➕</td><td>Simulador de gasto</td></tr>
+  <tr><td>Config</td><td>⚙️</td><td>Saldo, categorias, despesas fixas, conta</td></tr>
+</table>
+
+<h3>Dashboard (Home) — Componentes</h3>
+
+<ol>
+  <li>
+    <strong>Saldo card</strong> — clicável para editar inline; mostra saldo atual e data de atualização
+  </li>
+  <li>
+    <strong>Banner de alerta (dia crítico)</strong>
+    <ul>
+      <li>Só aparece se dia crítico ≤ 30 dias</li>
+      <li>Azul warning se &gt; 7 dias; vermelho se ≤ 7 dias</li>
+      <li>Texto: "Dia crítico: 18 Abr — Se não gastares mais nada além das fixas"</li>
+    </ul>
+  </li>
+  <li>
+    <strong>Gráfico de linha — projeção 30 dias</strong>
+    <ul>
+      <li>Eixo X = dias; eixo Y = saldo</li>
+      <li>Linha horizontal a zero</li>
+      <li>Ponto vermelho no dia crítico</li>
+      <li>Área abaixo de zero a vermelho translúcido</li>
+    </ul>
+  </li>
+  <li>
+    <strong>Resumo do mês</strong> — despesas vs rendimentos, barra de progresso percentual
+  </li>
+  <li>
+    <strong>Últimas transações</strong> — 3 rows, link "Ver todas →"
+  </li>
+</ol>
+
+<h3>Simulador de Gasto</h3>
+<ul>
+  <li>Acessível via tab "Simular" ou floating button no dashboard</li>
+  <li>Input de valor → recálculo instantâneo da projeção (zero writes na DB)</li>
+  <li>Mostra: saldo resultante, novo dia crítico (delta face ao atual)</li>
+  <li>Badge verde "Estás bem nos 30 dias" se gasto não causa problema</li>
+  <li>"Registar gasto" → cria transaction manual (<code>source: 'manual'</code>) <strong>e decrementa <code>profiles.balance</code></strong> pelo mesmo valor, atualizando <code>balance_updated_at</code>; fecha o simulador e recalcula a projeção com o novo saldo</li>
+</ul>
+
+<h3>Estados Vazios</h3>
+<ul>
+  <li>Sem CSV: card cinzento "Importa o teu extrato para ver o histórico" + botão</li>
+  <li>Sem despesas fixas: projeção mostra linha flat + sugestão de adicionar fixas</li>
+  <li>Saldo zero / onboarding incompleto: redirect para wizard</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="csv-import">6. CSV Import Flow</h2>
+
+<p>Fora do onboarding, o flow é um <strong>bottom sheet modal</strong> (não página separada). Disponível em: Tab Transações → "Importar CSV".</p>
+
+<pre>[ 1. Upload ] → [ 2. Mapeamento ]* → [ 3. Preview & Confirmação ] → [ 4. Resultado ]
+
+* Passo 2 só aparece se não existe config guardada, ou se user clica "Alterar mapeamento"</pre>
+
+<h3>Passo 3 — Preview & Confirmação</h3>
+<ul>
+  <li>Mostra contagem total, período (data min → max), e lista scrollável de transações</li>
+  <li>Duplicados detetados por <code>(date, description, amount)</code></li>
+  <li>Default: ignorar duplicados (checkbox marcado); contagem no botão reflete isso</li>
+</ul>
+
+<h3>Passo 4 — Resultado</h3>
+<ul>
+  <li>Contagem de transações importadas, agrupadas por categoria</li>
+  <li>"Categorizar agora" → abre lista de transações filtrada por "Sem categoria"</li>
+</ul>
+
+<h3>Regras de Categorização Automática</h3>
+<p>Aplicadas durante o import, por ordem de <code>priority DESC</code>. Case-insensitive, substring match contra <code>description</code>.</p>
+<table>
+  <tr><th>Keywords (exemplos)</th><th>Categoria</th></tr>
+  <tr><td>continente, pingo doce, lidl, aldi</td><td>🛒 Supermercado</td></tr>
+  <tr><td>uber, bolt, cp, carris, metro</td><td>🚗 Transportes</td></tr>
+  <tr><td>netflix, spotify, apple, amazon</td><td>📺 Subscrições</td></tr>
+  <tr><td>nos, meo, vodafone</td><td>📱 Telecomunicações</td></tr>
+  <tr><td>salário, vencimento, ordenado</td><td>💰 Rendimento</td></tr>
+</table>
+<p>Rules editáveis em <strong>Config → Categorias → Regras</strong>.</p>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="projection">7. Lógica de Projeção</h2>
+
+<p>Calculada client-side (ou Edge Function). <strong>Não guardada em tabela.</strong></p>
+
+<h3>Expansão de recurring_items no horizonte de 30 dias</h3>
+<p>Antes de calcular a projeção, cada <code>recurring_item</code> ativo é expandido para todas as suas ocorrências nos próximos 30 dias. O campo <code>next_date</code> é o ponto de partida; as ocorrências seguintes são derivadas pela frequência:</p>
+<pre>function occurrences(item, today, horizon=30):
+  dates = []
+  d = item.next_date
+  while d &lt;= today + 30 days:
+    if d &gt;= today:
+      dates.push(d)
+    d = nextOccurrence(d, item.frequency, item.day_of_month, item.day_of_week)
+  return dates
+
+nextOccurrence(from, frequency):
+  'monthly'   → mesmo dia do mês seguinte
+  'weekly'    → from + 7 dias
+  'quinzenal' → from + 14 dias  (biweekly = every 14 days)
+  'yearly'    → mesmo dia do ano seguinte</pre>
+
+<div class="warning-box">
+  <strong>Nota:</strong> <code>biweekly</code> no enum é renomeado para <code>quinzenal</code> — "biweekly" tem semântica ambígua em inglês; o termo português é inequívoco.
+</div>
+
+<h3>Fórmula da projeção</h3>
+<pre>events = expandir todos os recurring_items ativos nos próximos 30 dias
+
+para cada dia d em [hoje, hoje+30]:
+  projeção[d] = profiles.balance
+    - SUM(events WHERE type='expense' AND date = d)
+    + SUM(events WHERE type='income'  AND date = d)
+  // saldo acumula: projeção[d] parte do projeção[d-1], não do balance original
+  // isto é: projeção[d] = projeção[d-1] + cashflow[d]
+
+projeção[hoje] = profiles.balance + cashflow[hoje]
+projeção[d]    = projeção[d-1]    + cashflow[d]   para d > hoje
+
+dia_critico = MIN(d WHERE projeção[d] &lt; 0)
+            = undefined se projeção nunca negativa nos 30 dias</pre>
+
+<div class="warning-box">
+  <strong>Nota:</strong> A projeção usa apenas <code>recurring_items</code> — transações históricas do CSV não entram na projeção (são passado, não futuro). Transações futuras manuais são v2.
+</div>
+
+<h3>Convenção de sinais</h3>
+<p>Existem duas convenções no schema — esta divergência é <strong>intencional e documentada</strong>:</p>
+<table>
+  <tr><th>Tabela</th><th>Convenção</th><th>Razão</th></tr>
+  <tr><td><code>transactions.amount</code></td><td>Negativo = despesa; positivo = rendimento</td><td>Espelha o extrato bancário diretamente; facilita import CSV</td></tr>
+  <tr><td><code>recurring_items.amount</code></td><td>Sempre positivo; <code>type</code> define direção</td><td>Evita erros de sinal em formulários; valor introduzido pelo user é sempre positivo</td></tr>
+</table>
+<p>Qualquer utilitário de formatação ou soma deve verificar de qual tabela vem o dado antes de aplicar sinal.</p>
+
+<h3>Simulador</h3>
+<pre>projeção_simulada[d] = projeção[d] - gasto_simulado (para todo d &gt;= hoje)
+dia_critico_simulado = MIN(d WHERE projeção_simulada[d] &lt; 0)</pre>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2 id="open-questions">8. Questões em Aberto</h2>
+
+<table>
+  <tr><th>#</th><th>Questão</th><th>Impacto</th><th>Status</th></tr>
+  <tr>
+    <td>1</td>
+    <td>Múltiplas contas bancárias em v1 ou apenas uma?</td>
+    <td>Schema (tabela <code>accounts</code> separada vs <code>balance</code> direto em <code>profiles</code>)</td>
+    <td><span class="badge badge-blue">Decidido: uma conta (MVP)</span></td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Notificações push quando se aproxima o dia crítico?</td>
+    <td>Requer Service Worker + push API</td>
+    <td><span class="badge badge-red">Adiado para v2</span></td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Suporte a múltiplos CSVs do mesmo período (merge)?</td>
+    <td>Lógica de deduplicação mais complexa</td>
+    <td><span class="badge badge-red">Adiado para v2</span></td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Gráfico: library Recharts vs Chart.js vs Tremor?</td>
+    <td>Bundle size, API</td>
+    <td><span class="badge badge-blue">Decidido: Recharts</span></td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>"Resumo do mês" — fonte de dados: <code>transactions</code> históricas, <code>recurring_items</code>, ou ambas?</td>
+    <td>Display e estado vazio para users sem CSV</td>
+    <td><span class="badge badge-blue">Decidido: apenas <code>transactions</code> do mês corrente; se vazio, card mostra "Sem transações este mês — importa um extrato"</span></td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Config tab: ecrã para editar recurring items e categorias pós-onboarding?</td>
+    <td>Funcionalidade implícita mas não desenhada</td>
+    <td><span class="badge badge-red">A desenhar antes de implementar Config tab</span></td>
+  </tr>
+</table>
+
+<hr style="margin:2.5rem 0;border:none;border-top:1px solid var(--border);" />
+<p style="color:var(--gray);font-size:0.8rem;">StayAlive Design Spec v1.0 · Gerado em 2026-03-24 · Aprovado pelo utilizador</p>
+
+</body>
+</html>
