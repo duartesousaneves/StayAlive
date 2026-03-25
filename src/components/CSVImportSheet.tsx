@@ -1,10 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { parseCSV, applyMapping, type ColumnMapping } from '@/lib/csv'
 import { categorize } from '@/lib/categorize'
 import { createClient } from '@/lib/supabase/client'
 import { useCategories } from '@/hooks/useCategories'
+import { useAccounts } from '@/hooks/useAccounts'
 import { formatCurrency, formatShortDate } from '@/lib/format'
 
 type ImportStep = 'upload' | 'mapping' | 'preview' | 'done'
@@ -16,6 +17,7 @@ interface Props {
 
 export default function CSVImportSheet({ onClose, onImported }: Props) {
   const { rules } = useCategories()
+  const { accounts, defaultAccount } = useAccounts()
   const [step, setStep] = useState<ImportStep>('upload')
   const [headers, setHeaders] = useState<string[]>([])
   const [rawRows, setRawRows] = useState<Record<string, string>[]>([])
@@ -23,6 +25,13 @@ export default function CSVImportSheet({ onClose, onImported }: Props) {
   const [ignoreDuplicates, setIgnoreDuplicates] = useState(true)
   const [importedCount, setImportedCount] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (defaultAccount && !selectedAccountId) {
+      setSelectedAccountId(defaultAccount.id)
+    }
+  }, [defaultAccount])
 
   async function loadSavedMapping() {
     const supabase = createClient()
@@ -79,6 +88,7 @@ export default function CSVImportSheet({ onClose, onImported }: Props) {
       description: row.description,
       amount: row.amount,
       category_id: categorize(row.description, rules),
+      account_id: selectedAccountId,
       source: 'csv' as const,
     }))
 
@@ -132,6 +142,20 @@ export default function CSVImportSheet({ onClose, onImported }: Props) {
         <div className="px-6 py-6">
           {step === 'upload' && (
             <div className="flex flex-col gap-4">
+              {/* Account selector */}
+              <div>
+                <label className="text-xs text-gray-400 uppercase font-semibold block mb-1">Conta destino</label>
+                <select
+                  value={selectedAccountId ?? ''}
+                  onChange={e => setSelectedAccountId(e.target.value || null)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="">Selecionar conta…</option>
+                  {accounts.map(a => (
+                    <option key={a.id} value={a.id}>{a.name}</option>
+                  ))}
+                </select>
+              </div>
               <div
                 onClick={() => document.getElementById('csv-file-input')?.click()}
                 className="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center cursor-pointer hover:border-blue-400"
