@@ -10,12 +10,9 @@ export default async function RootPage() {
     .from('profiles')
     .select('onboarding_completed')
     .eq('id', user.id)
-    .single()
+    .single() as { data: { onboarding_completed: boolean } | null; error: unknown }
 
   // Use onboarding_completed flag — NOT balance, which can legitimately be 0 or negative
-  const onboardingCompleted = profileData != null && 'onboarding_completed' in profileData
-    ? (profileData as { onboarding_completed: boolean }).onboarding_completed
-    : false
-  if (!profileData || !onboardingCompleted) redirect('/onboarding')
+  if (!profileData || !profileData.onboarding_completed) redirect('/onboarding')
   redirect('/dashboard')
 }
