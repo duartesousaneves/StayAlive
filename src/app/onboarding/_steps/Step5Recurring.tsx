@@ -48,14 +48,21 @@ export default function Step5Recurring({ wizardState }: Props) {
 
       const balance = parseFloat(wizardState.balance.replace(',', '.'))
 
-      // 1. Update balance + mark onboarding complete
+      // 1. Create default checking account + mark onboarding complete
       await (supabase as any)
-        .from('profiles')
-        .update({
+        .from('accounts')
+        .insert({
+          user_id: user.id,
+          name: 'Conta à ordem',
+          type: 'checking',
           balance,
           balance_updated_at: new Date().toISOString(),
-          onboarding_completed: true,
+          is_default: true,
         })
+
+      await (supabase as any)
+        .from('profiles')
+        .update({ onboarding_completed: true })
         .eq('id', user.id)
 
       // 2. Create default categories + rules
