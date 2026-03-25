@@ -1,18 +1,17 @@
 'use client'
 import SimulatorPanel from '@/components/SimulatorPanel'
-import { useProfile } from '@/hooks/useProfile'
+import { useAccounts } from '@/hooks/useAccounts'
 import { useRecurringItems } from '@/hooks/useRecurringItems'
 import { useProjection } from '@/hooks/useProjection'
 import { createClient } from '@/lib/supabase/client'
 
 export default function SimulatorPage() {
-  const { profile, updateBalance, refetch } = useProfile()
+  const { defaultAccount, updateBalance } = useAccounts()
   const { items } = useRecurringItems()
-  const projection = useProjection(profile?.balance ?? null, items)
+  const projection = useProjection(defaultAccount?.balance ?? null, items)
 
   async function handleRegister(amount: number) {
-    if (!profile) return
-    // Create manual transaction
+    if (!defaultAccount) return
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -20,22 +19,21 @@ export default function SimulatorPage() {
       user_id: user.id,
       date: new Date().toISOString().split('T')[0],
       description: 'Gasto registado',
-      amount: -amount, // negative = expense
+      amount: -amount,
+      account_id: defaultAccount.id,
       source: 'manual',
     })
-    // Decrement balance
-    await updateBalance(profile.balance - amount)
-    await refetch()
+    await updateBalance(defaultAccount.id, defaultAccount.balance - amount)
   }
 
-  if (!profile || !projection) {
+  if (!defaultAccount || !projection) {
     return <div className="flex items-center justify-center h-64 text-gray-400">A carregar…</div>
   }
 
   return (
     <SimulatorPanel
       projection={projection}
-      currentBalance={profile.balance}
+      currentBalance={defaultAccount.balance}
       onRegister={handleRegister}
     />
   )
