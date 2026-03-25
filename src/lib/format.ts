@@ -7,7 +7,8 @@ export function formatCurrency(amount: number, currency = 'EUR'): string {
 }
 
 function parseLocalDate(iso: string): Date {
-  const [year, month, day] = iso.split('-').map(Number)
+  const datePart = iso.split('T')[0]
+  const [year, month, day] = datePart.split('-').map(Number)
   return new Date(year, month - 1, day)
 }
 
