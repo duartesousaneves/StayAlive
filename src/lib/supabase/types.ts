@@ -18,6 +18,7 @@ export type Database = {
           currency?: string
           onboarding_completed?: boolean
         }
+        Relationships: []
       }
       accounts: {
         Row: {
@@ -56,6 +57,7 @@ export type Database = {
           currency?: string
           is_default?: boolean
         }
+        Relationships: []
       }
       transaction_tags: {
         Row: {
@@ -76,6 +78,7 @@ export type Database = {
           name?: string
           color?: string
         }
+        Relationships: []
       }
       transaction_tag_assignments: {
         Row: {
@@ -87,6 +90,22 @@ export type Database = {
           tag_id: string
         }
         Update: Record<string, never>
+        Relationships: [
+          {
+            foreignKeyName: 'transaction_tag_assignments_transaction_id_fkey'
+            columns: ['transaction_id']
+            isOneToOne: false
+            referencedRelation: 'transactions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'transaction_tag_assignments_tag_id_fkey'
+            columns: ['tag_id']
+            isOneToOne: false
+            referencedRelation: 'transaction_tags'
+            referencedColumns: ['id']
+          }
+        ]
       }
       categories: {
         Row: {
@@ -111,6 +130,7 @@ export type Database = {
           type?: 'expense' | 'income'
           icon?: string
         }
+        Relationships: []
       }
       category_rules: {
         Row: {
@@ -132,6 +152,7 @@ export type Database = {
           category_id?: string
           priority?: number
         }
+        Relationships: []
       }
       transactions: {
         Row: {
@@ -164,6 +185,7 @@ export type Database = {
           account_id?: string | null
           source?: 'csv' | 'manual'
         }
+        Relationships: []
       }
       recurring_items: {
         Row: {
@@ -200,6 +222,7 @@ export type Database = {
           next_date?: string
           active?: boolean
         }
+        Relationships: []
       }
       user_settings: {
         Row: {
@@ -225,12 +248,14 @@ export type Database = {
           csv_negative_is_expense?: boolean
           updated_at?: string
         }
+        Relationships: []
       }
     }
+    Views: { [_ in never]: never }
     Functions: {
       set_default_account: {
         Args: { p_account_id: string }
-        Returns: void
+        Returns: undefined
       }
     }
     Enums: Record<string, never>
