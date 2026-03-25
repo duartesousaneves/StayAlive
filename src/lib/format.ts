@@ -6,17 +6,22 @@ export function formatCurrency(amount: number, currency = 'EUR'): string {
   }).format(amount)
 }
 
+function parseLocalDate(iso: string): Date {
+  const [year, month, day] = iso.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('pt-PT', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(iso))
+  }).format(parseLocalDate(iso))
 }
 
 export function formatShortDate(iso: string): string {
   return new Intl.DateTimeFormat('pt-PT', {
     day: 'numeric',
     month: 'short',
-  }).format(new Date(iso))
+  }).format(parseLocalDate(iso))
 }

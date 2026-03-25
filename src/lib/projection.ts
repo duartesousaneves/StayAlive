@@ -20,7 +20,10 @@ function addDays(date: Date, n: number): Date {
 }
 
 function toISODate(d: Date): string {
-  return d.toISOString().split('T')[0]
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function nextOccurrence(from: Date, item: RecurringItem): Date {
@@ -33,6 +36,7 @@ function nextOccurrence(from: Date, item: RecurringItem): Date {
       d.setDate(d.getDate() + 14)
       break
     case 'monthly':
+      d.setDate(1)
       d.setMonth(d.getMonth() + 1)
       if (item.day_of_month) d.setDate(item.day_of_month)
       break
@@ -50,7 +54,8 @@ function expandOccurrences(
 ): Date[] {
   const end = addDays(today, horizon)
   const dates: Date[] = []
-  let d = new Date(item.next_date)
+  const [year, month, day] = item.next_date.split('-').map(Number)
+  let d = new Date(year, month - 1, day) // local midnight
   while (d <= end) {
     if (d >= today) dates.push(new Date(d))
     d = nextOccurrence(d, item)
