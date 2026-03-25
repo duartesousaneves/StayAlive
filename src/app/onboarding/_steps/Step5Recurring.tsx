@@ -49,34 +49,39 @@ export default function Step5Recurring({ wizardState }: Props) {
       const balance = parseFloat(wizardState.balance.replace(',', '.'))
 
       // 1. Update balance + mark onboarding complete
-      await (supabase.from('profiles') as any).update({
-        balance,
-        balance_updated_at: new Date().toISOString(),
-        onboarding_completed: true,
-      }).eq('id', user.id)
+      await (supabase as any)
+        .from('profiles')
+        .update({
+          balance,
+          balance_updated_at: new Date().toISOString(),
+          onboarding_completed: true,
+        })
+        .eq('id', user.id)
 
       // 2. Create default categories + rules
       for (const cat of DEFAULT_CATEGORIES) {
-        const { data: createdCat } = await supabase
+        const { data: createdCat } = await (supabase as any)
           .from('categories')
-          .insert({ user_id: user.id, name: cat.name, type: cat.type, icon: cat.icon, color: cat.color } as any)
+          .insert([{ user_id: user.id, name: cat.name, type: cat.type, icon: cat.icon, color: cat.color }])
           .select('id')
-          .single() as any
+          .single()
         if (createdCat) {
-          await supabase.from('category_rules').insert(
-            cat.keywords.map((kw, i) => ({
-              user_id: user.id,
-              keyword: kw,
-              category_id: (createdCat as any).id,
-              priority: cat.keywords.length - i,
-            })) as any
-          )
+          await (supabase as any)
+            .from('category_rules')
+            .insert(
+              cat.keywords.map((kw, i) => ({
+                user_id: user.id,
+                keyword: kw,
+                category_id: createdCat.id,
+                priority: cat.keywords.length - i,
+              }))
+            )
         }
       }
 
       // 3. Import CSV transactions (if any)
       if (wizardState.mapping && wizardState.csvRows.length > 0) {
-        const { data: rules } = await supabase
+        const { data: rules } = await (supabase as any)
           .from('category_rules')
           .select('*')
           .eq('user_id', user.id)
@@ -84,12 +89,12 @@ export default function Step5Recurring({ wizardState }: Props) {
 
         const parsed = applyMapping(wizardState.csvRows, wizardState.mapping)
         // Deduplicate: onboarding can be retried if abandoned
-        const { data: existing } = await supabase
+        const { data: existing } = await (supabase as any)
           .from('transactions')
           .select('date, description, amount')
           .eq('user_id', user.id)
         const existingSet = new Set(
-          (existing as any ?? []).map((t: any) => `${t.date}|${t.description}|${t.amount}`)
+          (existing ?? []).map((t: any) => `${t.date}|${t.description}|${t.amount}`)
         )
         const txns = parsed
           .filter(row => !existingSet.has(`${row.date}|${row.description}|${row.amount}`))
@@ -102,35 +107,41 @@ export default function Step5Recurring({ wizardState }: Props) {
             source: 'csv' as const,
           }))
         if (txns.length > 0) {
-          await supabase.from('transactions').insert(txns as any)
+          await (supabase as any)
+            .from('transactions')
+            .insert(txns)
         }
 
         // Save CSV mapping to user_settings
-        await supabase.from('user_settings').upsert({
-          user_id: user.id,
-          csv_column_date: wizardState.mapping.dateCol,
-          csv_column_description: wizardState.mapping.descriptionCol,
-          csv_column_amount: wizardState.mapping.amountCol,
-          csv_negative_is_expense: wizardState.mapping.negativeIsExpense,
-          updated_at: new Date().toISOString(),
-        } as any)
+        await (supabase as any)
+          .from('user_settings')
+          .upsert({
+            user_id: user.id,
+            csv_column_date: wizardState.mapping.dateCol,
+            csv_column_description: wizardState.mapping.descriptionCol,
+            csv_column_amount: wizardState.mapping.amountCol,
+            csv_negative_is_expense: wizardState.mapping.negativeIsExpense,
+            updated_at: new Date().toISOString(),
+          })
       }
 
       // 4. Create recurring items
       const today = new Date().toISOString().split('T')[0]
       const validItems = items.filter(i => i.name.trim() && parseFloat(i.amount.replace(',', '.')) > 0)
       if (validItems.length > 0) {
-        await supabase.from('recurring_items').insert(
-          validItems.map(item => ({
-            user_id: user.id,
-            name: item.name.trim(),
-            amount: parseFloat(item.amount.replace(',', '.')),
-            type: item.type,
-            frequency: item.frequency,
-            next_date: today,
-            active: true,
-          })) as any
-        )
+        await (supabase as any)
+          .from('recurring_items')
+          .insert(
+            validItems.map(item => ({
+              user_id: user.id,
+              name: item.name.trim(),
+              amount: parseFloat(item.amount.replace(',', '.')),
+              type: item.type,
+              frequency: item.frequency,
+              next_date: today,
+              active: true,
+            }))
+          )
       }
 
       // 5. Clear localStorage

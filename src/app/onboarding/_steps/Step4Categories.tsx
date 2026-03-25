@@ -1,6 +1,6 @@
 'use client'
 
-const DEFAULT_CATEGORIES = [
+export const DEFAULT_CATEGORIES = [
   { name: 'Supermercado',     type: 'expense' as const, icon: '🛒', color: '#16a34a', keywords: ['continente', 'pingo doce', 'lidl', 'aldi', 'mercadona'] },
   { name: 'Transportes',      type: 'expense' as const, icon: '🚗', color: '#2563eb', keywords: ['uber', 'bolt', 'cp', 'carris', 'metro'] },
   { name: 'Subscrições',      type: 'expense' as const, icon: '📺', color: '#7c3aed', keywords: ['netflix', 'spotify', 'apple', 'amazon', 'disney'] },
@@ -45,5 +45,3 @@ export default function Step4Categories({ onDone, onSkip }: Props) {
     </div>
   )
 }
-
-export { DEFAULT_CATEGORIES }
