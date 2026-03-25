@@ -1,5 +1,5 @@
 'use client'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, Area, ComposedChart } from 'recharts'
+import { Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, Area, ComposedChart } from 'recharts'
 import { formatShortDate, formatCurrency } from '@/lib/format'
 import type { DayProjection } from '@/lib/projection'
 
