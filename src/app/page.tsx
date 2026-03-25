@@ -1,8 +1,18 @@
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold">StayAlive</h1>
-      <p className="mt-4 text-lg text-gray-600">Personal finance runway tracker</p>
-    </main>
-  );
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function RootPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('onboarding_completed')
+    .eq('id', user.id)
+    .single() as { data: { onboarding_completed: boolean } | null; error: unknown }
+
+  // Use onboarding_completed flag — NOT balance, which can legitimately be 0 or negative
+  if (!profile || !profile.onboarding_completed) redirect('/onboarding')
+  redirect('/dashboard')
 }
