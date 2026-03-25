@@ -4,26 +4,89 @@ export type Database = {
       profiles: {
         Row: {
           id: string
-          balance: number
-          balance_updated_at: string
           currency: string
           onboarding_completed: boolean
           created_at: string
         }
         Insert: {
           id: string
-          balance?: number
-          balance_updated_at?: string
           currency?: string
           onboarding_completed?: boolean
           created_at?: string
         }
         Update: {
-          balance?: number
-          balance_updated_at?: string
           currency?: string
           onboarding_completed?: boolean
         }
+      }
+      accounts: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          type: 'checking' | 'credit_card'
+          balance: number
+          balance_updated_at: string | null
+          credit_limit: number | null
+          statement_close_day: number | null
+          currency: string
+          is_default: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          type: 'checking' | 'credit_card'
+          balance?: number
+          balance_updated_at?: string | null
+          credit_limit?: number | null
+          statement_close_day?: number | null
+          currency?: string
+          is_default?: boolean
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          type?: 'checking' | 'credit_card'
+          balance?: number
+          balance_updated_at?: string | null
+          credit_limit?: number | null
+          statement_close_day?: number | null
+          currency?: string
+          is_default?: boolean
+        }
+      }
+      transaction_tags: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          color: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          color?: string
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          color?: string
+        }
+      }
+      transaction_tag_assignments: {
+        Row: {
+          transaction_id: string
+          tag_id: string
+        }
+        Insert: {
+          transaction_id: string
+          tag_id: string
+        }
+        Update: Record<string, never>
       }
       categories: {
         Row: {
@@ -78,6 +141,7 @@ export type Database = {
           description: string
           amount: number
           category_id: string | null
+          account_id: string | null
           source: 'csv' | 'manual'
           created_at: string
         }
@@ -88,6 +152,7 @@ export type Database = {
           description: string
           amount: number
           category_id?: string | null
+          account_id?: string | null
           source: 'csv' | 'manual'
           created_at?: string
         }
@@ -96,6 +161,7 @@ export type Database = {
           description?: string
           amount?: number
           category_id?: string | null
+          account_id?: string | null
           source?: 'csv' | 'manual'
         }
       }
@@ -161,6 +227,12 @@ export type Database = {
         }
       }
     }
-    Enums: {}
+    Functions: {
+      set_default_account: {
+        Args: { p_account_id: string }
+        Returns: void
+      }
+    }
+    Enums: Record<string, never>
   }
 }
