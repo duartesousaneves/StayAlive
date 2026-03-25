@@ -13,8 +13,10 @@ export default function Step1Balance({ value, onChange, onNext }: Props) {
     onChange(v)
   }
 
+  // Reject if more than one decimal separator exists
+  const hasMultipleDecimals = (value.match(/[.,]/g) ?? []).length > 1
   const numericValue = parseFloat(value.replace(',', '.'))
-  const valid = !isNaN(numericValue)
+  const valid = !isNaN(numericValue) && !hasMultipleDecimals
 
   return (
     <div className="px-6 py-8 flex flex-col gap-6">

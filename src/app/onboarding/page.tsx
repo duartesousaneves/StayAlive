@@ -39,7 +39,7 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const saved = loadState()
-    if (saved.balance) setState(s => ({ ...s, ...saved }))
+    if (Object.keys(saved).length > 0) setState(s => ({ ...s, ...saved }))
   }, [])
 
   function save(patch: Partial<WizardState>) {
