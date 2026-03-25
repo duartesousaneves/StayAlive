@@ -1,14 +1,23 @@
 'use client'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const supabase = createClient()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleLogin() {
-    await supabase.auth.signInWithOAuth({
+    setLoading(true)
+    setError(null)
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${location.origin}/auth/callback` },
     })
+    if (error) {
+      setError('Erro ao iniciar sessão. Tenta novamente.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -19,10 +28,12 @@ export default function LoginPage() {
       </div>
       <button
         onClick={handleLogin}
-        className="w-full max-w-xs flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-blue-600 text-white font-semibold text-base shadow hover:bg-blue-700 active:scale-95 transition"
+        disabled={loading}
+        className="w-full max-w-xs flex items-center justify-center gap-3 py-3 px-6 rounded-xl bg-blue-600 text-white font-semibold text-base shadow hover:bg-blue-700 active:scale-95 transition disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Entrar com Google
+        {loading ? 'A entrar...' : 'Entrar com Google'}
       </button>
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   )
 }

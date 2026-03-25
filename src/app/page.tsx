@@ -6,13 +6,16 @@ export default async function RootPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profileData } = await supabase
     .from('profiles')
     .select('onboarding_completed')
     .eq('id', user.id)
-    .single() as { data: { onboarding_completed: boolean } | null; error: unknown }
+    .single()
 
   // Use onboarding_completed flag — NOT balance, which can legitimately be 0 or negative
-  if (!profile || !profile.onboarding_completed) redirect('/onboarding')
+  const onboardingCompleted = profileData != null && 'onboarding_completed' in profileData
+    ? (profileData as { onboarding_completed: boolean }).onboarding_completed
+    : false
+  if (!profileData || !onboardingCompleted) redirect('/onboarding')
   redirect('/dashboard')
 }
