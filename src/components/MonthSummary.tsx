@@ -32,7 +32,10 @@ export default function MonthSummary({ transactions, onImportCSV }: Props) {
 
   return (
     <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
-      <p className="text-sm font-semibold text-gray-700 mb-3">Resumo do mês</p>
+      <div className="flex items-baseline gap-1 mb-3">
+        <p className="text-sm font-semibold text-gray-700">Resumo do mês</p>
+        <span className="text-xs text-gray-400">· todas as contas</span>
+      </div>
       <div className="flex justify-between text-sm mb-2">
         <span className="text-red-600">Despesas: {formatCurrency(expenses)}</span>
         <span className="text-green-600">Rendimento: {formatCurrency(income)}</span>
