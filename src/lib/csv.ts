@@ -30,18 +30,20 @@ export function parseCSV(file: File): Promise<{ headers: string[], rows: Record<
   })
 }
 
-function parsePortugueseDate(val: string): string {
+function parsePortugueseDate(val: string): string | null {
   // Handles DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD
   const ddmmyyyy = val.match(/^(\d{2})[/-](\d{2})[/-](\d{4})$/)
   if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`
-  return val // assume ISO
+  // Validate ISO format
+  if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val
+  return null
 }
 
 function parseAmount(val: string, negativeIsExpense: boolean): number {
   // Handle European number format: 1.234,56 → 1234.56
   const normalized = val.replace(/\./g, '').replace(',', '.')
   const n = parseFloat(normalized)
-  return negativeIsExpense ? n : Math.abs(n) * (n < 0 ? -1 : 1)
+  return negativeIsExpense ? n : -n
 }
 
 export function applyMapping(
@@ -52,12 +54,10 @@ export function applyMapping(
     .map(row => {
       const rawAmount = row[mapping.amountCol] ?? ''
       const amount = parseAmount(rawAmount, mapping.negativeIsExpense)
-      return {
-        date: parsePortugueseDate(row[mapping.dateCol] ?? ''),
-        description: (row[mapping.descriptionCol] ?? '').trim(),
-        amount,
-        raw: row,
-      }
+      const date = parsePortugueseDate(row[mapping.dateCol] ?? '')
+      return { date, description: (row[mapping.descriptionCol] ?? '').trim(), amount, raw: row }
     })
-    .filter(r => r.description && !isNaN(r.amount))
+    .filter((r): r is { date: string; description: string; amount: number; raw: Record<string, string> } =>
+      r.date !== null && r.description !== '' && !isNaN(r.amount)
+    )
 }
