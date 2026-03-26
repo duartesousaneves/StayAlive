@@ -2,13 +2,15 @@
 import SimulatorPanel from '@/components/SimulatorPanel'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useRecurringItems } from '@/hooks/useRecurringItems'
+import { usePlannedItems } from '@/hooks/usePlannedItems'
 import { useProjection } from '@/hooks/useProjection'
 import { createClient } from '@/lib/supabase/client'
 
 export default function SimulatorPage() {
   const { defaultAccount, updateBalance } = useAccounts()
   const { items } = useRecurringItems()
-  const projection = useProjection(defaultAccount?.balance ?? null, items)
+  const { items: plannedItems } = usePlannedItems()
+  const projection = useProjection(defaultAccount?.balance ?? null, items, plannedItems)
 
   async function handleRegister(amount: number) {
     if (!defaultAccount) return
