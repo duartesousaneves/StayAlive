@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { Database } from '@/lib/supabase/types'
 
 type Category = Database['public']['Tables']['categories']['Row']
+type Account = Database['public']['Tables']['accounts']['Row']
 
 export interface RecurringFormData {
   name: string
@@ -12,10 +13,12 @@ export interface RecurringFormData {
   next_date: string
   day_of_month: number | null
   category_id: string | null
+  account_id: string | null
 }
 
 interface Props {
   categories: Category[]
+  accounts: Account[]
   initialData?: RecurringFormData
   onSave: (data: RecurringFormData) => Promise<void>
   onCancel: () => void
@@ -48,13 +51,14 @@ function computeNextMonthlyDate(dayOfMonth: number): string {
   return d.toISOString().split('T')[0]
 }
 
-export default function RecurringItemForm({ categories, initialData, onSave, onCancel }: Props) {
+export default function RecurringItemForm({ categories, accounts, initialData, onSave, onCancel }: Props) {
   const [name, setName] = useState(initialData?.name ?? '')
   const [amount, setAmount] = useState(initialData ? initialData.amount.toFixed(2).replace('.', ',') : '')
   const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? 'expense')
   const [frequency, setFrequency] = useState<RecurringFormData['frequency']>(initialData?.frequency ?? 'monthly')
   const [dayOfMonth, setDayOfMonth] = useState(initialData?.day_of_month?.toString() ?? '')
   const [categoryId, setCategoryId] = useState<string>(initialData?.category_id ?? '')
+  const [accountId, setAccountId] = useState<string>(initialData?.account_id ?? '')
   const [saving, setSaving] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
@@ -77,6 +81,7 @@ export default function RecurringItemForm({ categories, initialData, onSave, onC
       next_date: nextDate,
       day_of_month: dom,
       category_id: categoryId || null,
+      account_id: accountId || null,
     })
     setSaving(false)
   }
@@ -146,6 +151,16 @@ export default function RecurringItemForm({ categories, initialData, onSave, onC
           ))}
         </select>
       )}
+      <select
+        value={accountId}
+        onChange={e => setAccountId(e.target.value)}
+        className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+      >
+        <option value="">Sem conta específica</option>
+        {accounts.map(a => (
+          <option key={a.id} value={a.id}>{a.name}</option>
+        ))}
+      </select>
       <div className="flex gap-2">
         <button
           onClick={handleSave}
