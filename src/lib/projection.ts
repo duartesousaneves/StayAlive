@@ -57,6 +57,15 @@ function expandOccurrences(
   const dates: Date[] = []
   const [year, month, day] = item.next_date.split('-').map(Number)
   let d = new Date(year, month - 1, day) // local midnight
+
+  // Defensive: if day_of_month is set but next_date lands on a different day,
+  // snap forward to the correct next occurrence on that day_of_month.
+  if (item.frequency === 'monthly' && item.day_of_month && d.getDate() !== item.day_of_month) {
+    const dom = item.day_of_month
+    const candidate = new Date(d.getFullYear(), d.getMonth(), dom)
+    if (candidate < d) candidate.setMonth(candidate.getMonth() + 1)
+    d = candidate
+  }
   while (d <= end) {
     if (d >= today) dates.push(new Date(d))
     d = nextOccurrence(d, item)
