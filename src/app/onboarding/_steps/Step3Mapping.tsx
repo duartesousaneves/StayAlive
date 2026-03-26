@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { applyMapping, type ColumnMapping } from '@/lib/csv'
+import { formatCurrency } from '@/lib/format'
 
 interface Props {
   headers: string[]
@@ -58,7 +59,7 @@ export default function Step3Mapping({ headers, rows, savedMapping, onDone, onSk
             <div key={i} className="flex justify-between">
               <span className="text-gray-600 truncate max-w-[60%]">{row.description}</span>
               <span className={row.amount < 0 ? 'text-red-600' : 'text-green-600'}>
-                {row.amount.toFixed(2)} €
+                {formatCurrency(row.amount)}
               </span>
             </div>
           ))}

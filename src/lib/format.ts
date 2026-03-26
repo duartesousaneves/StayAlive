@@ -1,9 +1,10 @@
 export function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('pt-PT', {
+  const formatted = new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
-  }).format(amount)
+  }).format(Math.abs(amount))
+  return amount < 0 ? `-${formatted}` : formatted
 }
 
 function parseLocalDate(iso: string): Date {
