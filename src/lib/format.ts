@@ -1,9 +1,8 @@
-export function formatCurrency(amount: number, currency = 'EUR'): string {
-  const formatted = new Intl.NumberFormat('pt-PT', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-  }).format(Math.abs(amount))
+export function formatCurrency(amount: number): string {
+  const abs = Math.abs(amount)
+  const [intPart, decPart] = abs.toFixed(2).split('.')
+  const intFormatted = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  const formatted = `${intFormatted},${decPart} €`
   return amount < 0 ? `-${formatted}` : formatted
 }
 
