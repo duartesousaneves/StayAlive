@@ -71,6 +71,7 @@ export default function RecorrentesPage() {
         <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-50">
           {items.map(item => {
             const catName = getCategoryName(item.category_id)
+            const accountName = getAccountName(item.account_id)
             return (
               <div
                 key={item.id}
@@ -86,7 +87,7 @@ export default function RecorrentesPage() {
                     {' · '}
                     {item.type === 'expense' ? 'Despesa' : 'Rendimento'}
                     {catName ? ` · ${catName}` : ''}
-                    {getAccountName(item.account_id) ? ` · ${getAccountName(item.account_id)}` : ''}
+                    {accountName ? ` · ${accountName}` : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">

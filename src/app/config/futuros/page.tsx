@@ -69,6 +69,7 @@ export default function FuturosPage() {
         <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-50">
           {items.map(item => {
             const catName = getCategoryName(item.category_id)
+            const accountName = getAccountName(item.account_id)
             return (
               <div
                 key={item.id}
@@ -83,7 +84,7 @@ export default function FuturosPage() {
                     {' · '}
                     {item.type === 'expense' ? 'Despesa' : 'Rendimento'}
                     {catName ? ` · ${catName}` : ''}
-                    {getAccountName(item.account_id) ? ` · ${getAccountName(item.account_id)}` : ''}
+                    {accountName ? ` · ${accountName}` : ''}
                   </p>
                   {item.notes && (
                     <p className="text-xs text-gray-400 mt-0.5 truncate">{item.notes}</p>
