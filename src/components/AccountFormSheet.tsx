@@ -10,7 +10,7 @@ interface Props {
 
 export default function AccountFormSheet({ account, onSave, onClose }: Props) {
   const [name, setName] = useState(account?.name ?? '')
-  const [type, setType] = useState<'checking' | 'credit_card'>(account?.type ?? 'checking')
+  const [type, setType] = useState<'checking' | 'credit_card' | 'cash'>(account?.type ?? 'checking')
   const [balanceStr, setBalanceStr] = useState(
     account ? account.balance.toFixed(2).replace('.', ',') : '0,00'
   )
@@ -68,12 +68,13 @@ export default function AccountFormSheet({ account, onSave, onClose }: Props) {
             <label className="text-xs text-gray-400 uppercase font-semibold">Tipo</label>
             <select
               value={type}
-              onChange={e => setType(e.target.value as 'checking' | 'credit_card')}
+              onChange={e => setType(e.target.value as 'checking' | 'credit_card' | 'cash')}
               disabled={!!account}
               className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm disabled:bg-gray-50"
             >
               <option value="checking">Conta à ordem</option>
               <option value="credit_card">Cartão de crédito</option>
+              <option value="cash">Dinheiro</option>
             </select>
           </div>
 

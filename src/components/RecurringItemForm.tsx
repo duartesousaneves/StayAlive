@@ -1,5 +1,8 @@
 'use client'
 import { useState } from 'react'
+import type { Database } from '@/lib/supabase/types'
+
+type Category = Database['public']['Tables']['categories']['Row']
 
 export interface RecurringFormData {
   name: string
@@ -7,27 +10,73 @@ export interface RecurringFormData {
   type: 'expense' | 'income'
   frequency: 'monthly' | 'weekly' | 'quinzenal' | 'yearly'
   next_date: string
+  day_of_month: number | null
+  category_id: string | null
 }
 
 interface Props {
+  categories: Category[]
   onSave: (data: RecurringFormData) => Promise<void>
   onCancel: () => void
 }
 
-export default function RecurringItemForm({ onSave, onCancel }: Props) {
+/** Given a desired day-of-month, returns the next YYYY-MM-DD date on that day. */
+function computeNextMonthlyDate(dayOfMonth: number): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() // 0-indexed
+  const today = now.getDate()
+
+  // Clamp day to valid range for current month
+  const daysInCurrentMonth = new Date(year, month + 1, 0).getDate()
+  const effectiveDay = Math.min(dayOfMonth, daysInCurrentMonth)
+
+  if (today <= effectiveDay) {
+    // Still ahead this month
+    const d = new Date(year, month, effectiveDay)
+    return d.toISOString().split('T')[0]
+  }
+
+  // Already passed — use next month
+  const nextMonth = month + 1
+  const nextYear = nextMonth > 11 ? year + 1 : year
+  const normalizedMonth = nextMonth % 12
+  const daysInNextMonth = new Date(nextYear, normalizedMonth + 1, 0).getDate()
+  const nextDay = Math.min(dayOfMonth, daysInNextMonth)
+  const d = new Date(nextYear, normalizedMonth, nextDay)
+  return d.toISOString().split('T')[0]
+}
+
+export default function RecurringItemForm({ categories, onSave, onCancel }: Props) {
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
   const [type, setType] = useState<'expense' | 'income'>('expense')
   const [frequency, setFrequency] = useState<RecurringFormData['frequency']>('monthly')
+  const [dayOfMonth, setDayOfMonth] = useState('')
+  const [categoryId, setCategoryId] = useState<string>('')
   const [saving, setSaving] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
 
+  const filteredCategories = categories.filter(c => c.type === type)
+
   async function handleSave() {
     const n = parseFloat(amount.replace(',', '.'))
     if (!name.trim() || isNaN(n) || n <= 0) return
+
+    const dom = frequency === 'monthly' && dayOfMonth ? parseInt(dayOfMonth, 10) : null
+    const nextDate = dom ? computeNextMonthlyDate(dom) : today
+
     setSaving(true)
-    await onSave({ name: name.trim(), amount: n, type, frequency, next_date: today })
+    await onSave({
+      name: name.trim(),
+      amount: n,
+      type,
+      frequency,
+      next_date: nextDate,
+      day_of_month: dom,
+      category_id: categoryId || null,
+    })
     setSaving(false)
   }
 
@@ -52,7 +101,7 @@ export default function RecurringItemForm({ onSave, onCancel }: Props) {
         </div>
         <select
           value={type}
-          onChange={e => setType(e.target.value as 'expense' | 'income')}
+          onChange={e => { setType(e.target.value as 'expense' | 'income'); setCategoryId('') }}
           className="border border-gray-200 rounded-lg px-2 text-sm"
         >
           <option value="expense">Despesa</option>
@@ -69,6 +118,33 @@ export default function RecurringItemForm({ onSave, onCancel }: Props) {
         <option value="quinzenal">Quinzenal</option>
         <option value="yearly">Anual</option>
       </select>
+      {frequency === 'monthly' && (
+        <div>
+          <label className="text-xs text-gray-400 uppercase font-semibold">Dia do mês</label>
+          <input
+            value={dayOfMonth}
+            onChange={e => {
+              const v = e.target.value.replace(/[^0-9]/g, '')
+              if (v === '' || (parseInt(v, 10) >= 1 && parseInt(v, 10) <= 31)) setDayOfMonth(v)
+            }}
+            inputMode="numeric"
+            placeholder="Ex: 1"
+            className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+      )}
+      {filteredCategories.length > 0 && (
+        <select
+          value={categoryId}
+          onChange={e => setCategoryId(e.target.value)}
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">Sem categoria</option>
+          {filteredCategories.map(c => (
+            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+          ))}
+        </select>
+      )}
       <div className="flex gap-2">
         <button
           onClick={handleSave}

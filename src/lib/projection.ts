@@ -1,6 +1,7 @@
 import type { Database } from './supabase/types'
 
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
+type PlannedItem = Database['public']['Tables']['planned_items']['Row']
 
 export interface DayProjection {
   date: string // YYYY-MM-DD
@@ -66,10 +67,12 @@ function expandOccurrences(
 export function computeProjection(
   currentBalance: number,
   recurringItems: RecurringItem[],
+  plannedItems: PlannedItem[],
   horizon = 30
 ): ProjectionResult {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const end = addDays(today, horizon)
 
   // Build cashflow map: date → net cashflow
   const cashflowMap = new Map<string, number>()
@@ -80,6 +83,17 @@ export function computeProjection(
     const dates = expandOccurrences(item, today, horizon)
     for (const d of dates) {
       const key = toISODate(d)
+      cashflowMap.set(key, (cashflowMap.get(key) ?? 0) + sign * item.amount)
+    }
+  }
+
+  for (const item of plannedItems) {
+    if (!item.active) continue
+    const [year, month, day] = item.planned_date.split('-').map(Number)
+    const itemDate = new Date(year, month - 1, day)
+    if (itemDate >= today && itemDate <= end) {
+      const sign = item.type === 'income' ? 1 : -1
+      const key = item.planned_date
       cashflowMap.set(key, (cashflowMap.get(key) ?? 0) + sign * item.amount)
     }
   }

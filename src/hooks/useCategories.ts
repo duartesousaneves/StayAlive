@@ -4,7 +4,10 @@ import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
 
 type Category = Database['public']['Tables']['categories']['Row']
+type CategoryInsert = Database['public']['Tables']['categories']['Insert']
 type CategoryRule = Database['public']['Tables']['category_rules']['Row']
+
+export type { Category, CategoryRule }
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -24,5 +27,19 @@ export function useCategories() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  return { categories, rules, loading, refetch: fetchData }
+  async function addCategory(data: Omit<CategoryInsert, 'user_id'>): Promise<void> {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await (supabase.from('categories') as any).insert({ ...data, user_id: user.id })
+    await fetchData()
+  }
+
+  async function deleteCategory(id: string): Promise<void> {
+    const supabase = createClient()
+    await (supabase.from('categories') as any).delete().eq('id', id)
+    await fetchData()
+  }
+
+  return { categories, rules, loading, refetch: fetchData, addCategory, deleteCategory }
 }

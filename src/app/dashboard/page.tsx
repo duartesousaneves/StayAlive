@@ -10,6 +10,7 @@ import TransactionEditModal from '@/components/TransactionEditModal'
 import CSVImportSheet from '@/components/CSVImportSheet'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useRecurringItems } from '@/hooks/useRecurringItems'
+import { usePlannedItems } from '@/hooks/usePlannedItems'
 import { useProjection } from '@/hooks/useProjection'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
@@ -23,10 +24,11 @@ import type { Account } from '@/hooks/useAccounts'
 export default function DashboardPage() {
   const { accounts, defaultAccount, loading: accountsLoading, updateBalance, createAccount, updateAccount } = useAccounts()
   const { items } = useRecurringItems()
+  const { items: plannedItems } = usePlannedItems()
   const { transactions, refetch: refetchTxns } = useTransactions(50)
   const { categories, rules } = useCategories()
   const { tags, getOrCreateTag, getAssignedTagIds } = useTransactionTags()
-  const projection = useProjection(defaultAccount?.balance ?? null, items)
+  const projection = useProjection(defaultAccount?.balance ?? null, items, plannedItems)
 
   const [showImport, setShowImport] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)

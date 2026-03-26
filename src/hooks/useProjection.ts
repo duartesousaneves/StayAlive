@@ -4,15 +4,17 @@ import { computeProjection, computeSimulatedProjection, type ProjectionResult } 
 import type { Database } from '@/lib/supabase/types'
 
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
+type PlannedItem = Database['public']['Tables']['planned_items']['Row']
 
 export function useProjection(
   balance: number | null,
-  recurringItems: RecurringItem[]
+  recurringItems: RecurringItem[],
+  plannedItems: PlannedItem[]
 ): ProjectionResult | null {
   return useMemo(() => {
     if (balance === null) return null
-    return computeProjection(balance, recurringItems)
-  }, [balance, recurringItems])
+    return computeProjection(balance, recurringItems, plannedItems)
+  }, [balance, recurringItems, plannedItems])
 }
 
 export function useSimulatedProjection(

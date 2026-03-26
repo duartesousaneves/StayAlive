@@ -25,7 +25,7 @@ export type Database = {
           id: string
           user_id: string
           name: string
-          type: 'checking' | 'credit_card'
+          type: 'checking' | 'credit_card' | 'cash'
           balance: number
           balance_updated_at: string | null
           credit_limit: number | null
@@ -38,7 +38,7 @@ export type Database = {
           id?: string
           user_id: string
           name: string
-          type: 'checking' | 'credit_card'
+          type: 'checking' | 'credit_card' | 'cash'
           balance?: number
           balance_updated_at?: string | null
           credit_limit?: number | null
@@ -49,7 +49,7 @@ export type Database = {
         }
         Update: {
           name?: string
-          type?: 'checking' | 'credit_card'
+          type?: 'checking' | 'credit_card' | 'cash'
           balance?: number
           balance_updated_at?: string | null
           credit_limit?: number | null
@@ -199,6 +199,7 @@ export type Database = {
           day_of_week: number | null
           next_date: string
           active: boolean
+          category_id: string | null
         }
         Insert: {
           id?: string
@@ -211,6 +212,7 @@ export type Database = {
           day_of_week?: number | null
           next_date: string
           active?: boolean
+          category_id?: string | null
         }
         Update: {
           name?: string
@@ -221,8 +223,61 @@ export type Database = {
           day_of_week?: number | null
           next_date?: string
           active?: boolean
+          category_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'recurring_items_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      planned_items: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          amount: number
+          type: 'expense' | 'income'
+          planned_date: string
+          category_id: string | null
+          notes: string | null
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          amount: number
+          type: 'expense' | 'income'
+          planned_date: string
+          category_id?: string | null
+          notes?: string | null
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          amount?: number
+          type?: 'expense' | 'income'
+          planned_date?: string
+          category_id?: string | null
+          notes?: string | null
+          active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'planned_items_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: ['id']
+          }
+        ]
       }
       user_settings: {
         Row: {
