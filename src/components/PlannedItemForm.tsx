@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { Database } from '@/lib/supabase/types'
 
 type Category = Database['public']['Tables']['categories']['Row']
+type Account = Database['public']['Tables']['accounts']['Row']
 
 export interface PlannedFormData {
   name: string
@@ -11,22 +12,25 @@ export interface PlannedFormData {
   planned_date: string
   category_id: string | null
   notes: string | null
+  account_id: string | null
 }
 
 interface Props {
   categories: Category[]
+  accounts: Account[]
   initialData?: PlannedFormData
   onSave: (data: PlannedFormData) => Promise<void>
   onCancel: () => void
 }
 
-export default function PlannedItemForm({ categories, initialData, onSave, onCancel }: Props) {
+export default function PlannedItemForm({ categories, accounts, initialData, onSave, onCancel }: Props) {
   const [name, setName] = useState(initialData?.name ?? '')
   const [amount, setAmount] = useState(initialData ? initialData.amount.toFixed(2).replace('.', ',') : '')
   const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? 'expense')
   const [plannedDate, setPlannedDate] = useState(initialData?.planned_date ?? '')
   const [categoryId, setCategoryId] = useState(initialData?.category_id ?? '')
   const [notes, setNotes] = useState(initialData?.notes ?? '')
+  const [accountId, setAccountId] = useState<string>(initialData?.account_id ?? '')
   const [saving, setSaving] = useState(false)
 
   const filteredCategories = categories.filter(c => c.type === type)
@@ -42,6 +46,7 @@ export default function PlannedItemForm({ categories, initialData, onSave, onCan
       planned_date: plannedDate,
       category_id: categoryId || null,
       notes: notes.trim() || null,
+      account_id: accountId || null,
     })
     setSaving(false)
   }
@@ -102,6 +107,16 @@ export default function PlannedItemForm({ categories, initialData, onSave, onCan
         rows={2}
         className="border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
       />
+      <select
+        value={accountId}
+        onChange={e => setAccountId(e.target.value)}
+        className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+      >
+        <option value="">Sem conta específica</option>
+        {accounts.map(a => (
+          <option key={a.id} value={a.id}>{a.name}</option>
+        ))}
+      </select>
       <div className="flex gap-2">
         <button
           onClick={handleSave}
