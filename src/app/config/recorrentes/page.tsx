@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRecurringItems, type RecurringItem } from '@/hooks/useRecurringItems'
 import { useCategories } from '@/hooks/useCategories'
+import { useAccounts } from '@/hooks/useAccounts'
 import RecurringItemForm, { type RecurringFormData } from '@/components/RecurringItemForm'
 import { formatCurrency } from '@/lib/format'
 
@@ -16,6 +17,7 @@ const FREQUENCY_LABELS: Record<string, string> = {
 export default function RecorrentesPage() {
   const { items, addItem, updateItem, removeItem } = useRecurringItems()
   const { categories } = useCategories()
+  const { accounts } = useAccounts()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingItem, setEditingItem] = useState<RecurringItem | null>(null)
   const lastTap = useRef<Record<string, number>>({})
@@ -35,6 +37,7 @@ export default function RecorrentesPage() {
       next_date: data.next_date,
       day_of_month: data.day_of_month,
       category_id: data.category_id,
+      account_id: data.account_id,
     })
     setEditingItem(null)
   }
@@ -48,6 +51,11 @@ export default function RecorrentesPage() {
   function getCategoryName(categoryId: string | null): string | null {
     if (!categoryId) return null
     return categories.find(c => c.id === categoryId)?.name ?? null
+  }
+
+  function getAccountName(accountId: string | null): string | null {
+    if (!accountId) return null
+    return accounts.find(a => a.id === accountId)?.name ?? null
   }
 
   return (
@@ -78,6 +86,7 @@ export default function RecorrentesPage() {
                     {' · '}
                     {item.type === 'expense' ? 'Despesa' : 'Rendimento'}
                     {catName ? ` · ${catName}` : ''}
+                    {getAccountName(item.account_id) ? ` · ${getAccountName(item.account_id)}` : ''}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -97,6 +106,7 @@ export default function RecorrentesPage() {
           <div className="mt-3">
             <RecurringItemForm
               categories={categories}
+              accounts={accounts}
               onSave={handleAdd}
               onCancel={() => setShowAddForm(false)}
             />
@@ -122,6 +132,7 @@ export default function RecorrentesPage() {
             <div className="px-4 py-4 pb-8">
               <RecurringItemForm
                 categories={categories}
+                accounts={accounts}
                 initialData={{
                   name: editingItem.name,
                   amount: editingItem.amount,
@@ -130,6 +141,7 @@ export default function RecorrentesPage() {
                   next_date: editingItem.next_date ?? new Date().toISOString().split('T')[0],
                   day_of_month: editingItem.day_of_month,
                   category_id: editingItem.category_id,
+                  account_id: editingItem.account_id,
                 }}
                 onSave={handleEdit}
                 onCancel={() => setEditingItem(null)}
