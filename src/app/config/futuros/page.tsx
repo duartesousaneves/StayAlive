@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { usePlannedItems, type PlannedItem } from '@/hooks/usePlannedItems'
 import { useCategories } from '@/hooks/useCategories'
+import { useAccounts } from '@/hooks/useAccounts'
 import PlannedItemForm, { type PlannedFormData } from '@/components/PlannedItemForm'
 import { formatCurrency } from '@/lib/format'
 
@@ -15,6 +16,7 @@ function formatDate(dateStr: string): string {
 export default function FuturosPage() {
   const { items, addItem, updateItem, removeItem } = usePlannedItems()
   const { categories } = useCategories()
+  const { accounts } = useAccounts()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingItem, setEditingItem] = useState<PlannedItem | null>(null)
   const lastTap = useRef<Record<string, number>>({})
@@ -33,6 +35,7 @@ export default function FuturosPage() {
       planned_date: data.planned_date,
       category_id: data.category_id,
       notes: data.notes,
+      account_id: data.account_id,
     })
     setEditingItem(null)
   }
@@ -46,6 +49,11 @@ export default function FuturosPage() {
   function getCategoryName(categoryId: string | null): string | null {
     if (!categoryId) return null
     return categories.find(c => c.id === categoryId)?.name ?? null
+  }
+
+  function getAccountName(accountId: string | null): string | null {
+    if (!accountId) return null
+    return accounts.find(a => a.id === accountId)?.name ?? null
   }
 
   return (
@@ -75,6 +83,7 @@ export default function FuturosPage() {
                     {' · '}
                     {item.type === 'expense' ? 'Despesa' : 'Rendimento'}
                     {catName ? ` · ${catName}` : ''}
+                    {getAccountName(item.account_id) ? ` · ${getAccountName(item.account_id)}` : ''}
                   </p>
                   {item.notes && (
                     <p className="text-xs text-gray-400 mt-0.5 truncate">{item.notes}</p>
@@ -97,6 +106,7 @@ export default function FuturosPage() {
           <div className="mt-3">
             <PlannedItemForm
               categories={categories}
+              accounts={accounts}
               onSave={handleAdd}
               onCancel={() => setShowAddForm(false)}
             />
@@ -122,6 +132,7 @@ export default function FuturosPage() {
             <div className="px-4 py-4 pb-8">
               <PlannedItemForm
                 categories={categories}
+                accounts={accounts}
                 initialData={{
                   name: editingItem.name,
                   amount: editingItem.amount,
@@ -129,6 +140,7 @@ export default function FuturosPage() {
                   planned_date: editingItem.planned_date,
                   category_id: editingItem.category_id,
                   notes: editingItem.notes,
+                  account_id: editingItem.account_id,
                 }}
                 onSave={handleEdit}
                 onCancel={() => setEditingItem(null)}
