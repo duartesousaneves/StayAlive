@@ -1,42 +1,80 @@
 'use client'
-import SimulatorPanel from '@/components/SimulatorPanel'
+import { useState } from 'react'
+import Link from 'next/link'
+import ManualTransactionForm from '@/components/ManualTransactionForm'
+import type { ManualTransactionData } from '@/components/ManualTransactionForm'
 import { useAccounts } from '@/hooks/useAccounts'
-import { useRecurringItems } from '@/hooks/useRecurringItems'
-import { usePlannedItems } from '@/hooks/usePlannedItems'
-import { useProjection } from '@/hooks/useProjection'
-import { createClient } from '@/lib/supabase/client'
+import { useCategories } from '@/hooks/useCategories'
+import { useTransactions } from '@/hooks/useTransactions'
 
-export default function SimulatorPage() {
-  const { defaultAccount, updateBalance } = useAccounts()
-  const { items } = useRecurringItems()
-  const { items: plannedItems } = usePlannedItems()
-  const projection = useProjection(defaultAccount?.balance ?? null, items, plannedItems)
+export default function RegistarPage() {
+  const { accounts, defaultAccount, loading: accountsLoading, updateBalance } = useAccounts()
+  const { categories, rules, loading: categoriesLoading } = useCategories()
+  const { insertTransaction } = useTransactions()
 
-  async function handleRegister(amount: number) {
-    if (!defaultAccount) return
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await (supabase.from('transactions') as any).insert({
-      user_id: user.id,
-      date: new Date().toISOString().split('T')[0],
-      description: 'Gasto registado',
-      amount: -amount,
-      account_id: defaultAccount.id,
-      source: 'manual',
-    })
-    await updateBalance(defaultAccount.id, defaultAccount.balance - amount)
+  const [saving, setSaving] = useState(false)
+  const [confirmed, setConfirmed] = useState(false)
+
+  const loading = accountsLoading || categoriesLoading
+
+  async function handleSubmit(data: ManualTransactionData) {
+    setSaving(true)
+    try {
+      await insertTransaction({
+        date: data.date,
+        description: data.description,
+        amount: data.amount,
+        account_id: data.account_id,
+        category_id: data.category_id,
+        source: 'manual',
+      })
+      const account = accounts.find(a => a.id === data.account_id)
+      if (account) {
+        await updateBalance(account.id, account.balance + data.amount)
+      }
+      setConfirmed(true)
+      setTimeout(() => setConfirmed(false), 2000)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  if (!defaultAccount || !projection) {
+  if (loading) {
     return <div className="flex items-center justify-center h-64 text-gray-400">A carregar…</div>
   }
 
+  if (accounts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3 px-6 text-center">
+        <p className="text-gray-500 text-sm">Ainda não tens nenhuma conta configurada.</p>
+        <Link
+          href="/config/contas"
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold"
+        >
+          Configurar contas
+        </Link>
+      </div>
+    )
+  }
+
   return (
-    <SimulatorPanel
-      projection={projection}
-      currentBalance={defaultAccount.balance}
-      onRegister={handleRegister}
-    />
+    <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+      <h1 className="text-xl font-bold text-gray-800">Registar transação</h1>
+
+      {confirmed && (
+        <div className="bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 text-sm font-medium text-center">
+          ✓ Transação registada
+        </div>
+      )}
+
+      <ManualTransactionForm
+        accounts={accounts}
+        defaultAccountId={defaultAccount?.id ?? null}
+        categories={categories}
+        rules={rules}
+        saving={saving}
+        onSubmit={handleSubmit}
+      />
+    </div>
   )
 }
