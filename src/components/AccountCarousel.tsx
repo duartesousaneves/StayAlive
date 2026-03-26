@@ -5,14 +5,26 @@ import type { Account } from '@/hooks/useAccounts'
 
 interface Props {
   accounts: Account[]
+  selectedAccountId: string | null
+  onSelectAccount: (account: Account) => void
   onEditAccount: (account: Account) => void
   onAddAccount: () => void
 }
 
-export default function AccountCarousel({ accounts, onEditAccount, onAddAccount }: Props) {
-  const [activeIndex, setActiveIndex] = useState(0)
+export default function AccountCarousel({ accounts, selectedAccountId, onSelectAccount, onEditAccount, onAddAccount }: Props) {
+  const initialIndex = selectedAccountId
+    ? Math.max(0, accounts.findIndex(a => a.id === selectedAccountId))
+    : 0
+  const [activeIndex, setActiveIndex] = useState(initialIndex)
   const startX = useRef(0)
   const total = accounts.length + 1  // +1 for the "add" card
+
+  function navigate(newIndex: number) {
+    setActiveIndex(newIndex)
+    if (newIndex < accounts.length) {
+      onSelectAccount(accounts[newIndex])
+    }
+  }
 
   function handleTouchStart(e: React.TouchEvent) {
     startX.current = e.touches[0].clientX
@@ -20,8 +32,8 @@ export default function AccountCarousel({ accounts, onEditAccount, onAddAccount 
 
   function handleTouchEnd(e: React.TouchEvent) {
     const delta = startX.current - e.changedTouches[0].clientX
-    if (delta > 40 && activeIndex < total - 1) setActiveIndex(i => i + 1)
-    if (delta < -40 && activeIndex > 0) setActiveIndex(i => i - 1)
+    if (delta > 40 && activeIndex < total - 1) navigate(activeIndex + 1)
+    if (delta < -40 && activeIndex > 0) navigate(activeIndex - 1)
   }
 
   return (
@@ -57,7 +69,7 @@ export default function AccountCarousel({ accounts, onEditAccount, onAddAccount 
         {Array.from({ length: total }).map((_, i) => (
           <button
             key={i}
-            onClick={() => setActiveIndex(i)}
+            onClick={() => navigate(i)}
             className={`w-1.5 h-1.5 rounded-full transition-colors ${
               i === activeIndex ? 'bg-blue-600' : 'bg-gray-300'
             }`}
