@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useCategories } from '@/hooks/useCategories'
+import { useCategories, type Category } from '@/hooks/useCategories'
 import { createClient } from '@/lib/supabase/client'
 
 const PRESET_COLORS = [
@@ -10,7 +10,7 @@ const PRESET_COLORS = [
 ]
 
 export default function CategoriasPage() {
-  const { categories, rules, refetch: refetchCategories, addCategory, deleteCategory } = useCategories()
+  const { categories, rules, refetch: refetchCategories, addCategory, updateCategory, deleteCategory } = useCategories()
   const [addingRuleForCatId, setAddingRuleForCatId] = useState<string | null>(null)
   const [newRuleKeyword, setNewRuleKeyword] = useState('')
   const [showNewCatForm, setShowNewCatForm] = useState(false)
@@ -19,6 +19,40 @@ export default function CategoriasPage() {
   const [newCatColor, setNewCatColor] = useState(PRESET_COLORS[0])
   const [newCatIcon, setNewCatIcon] = useState('📂')
   const [savingCat, setSavingCat] = useState(false)
+  const [editingCat, setEditingCat] = useState<Category | null>(null)
+  const [editCatName, setEditCatName] = useState('')
+  const [editCatIcon, setEditCatIcon] = useState('')
+  const [editCatType, setEditCatType] = useState<'expense' | 'income'>('expense')
+  const [editCatColor, setEditCatColor] = useState(PRESET_COLORS[0])
+  const [savingEditCat, setSavingEditCat] = useState(false)
+  const lastTap = useRef<Record<string, number>>({})
+
+  function openEditCat(cat: Category) {
+    setEditingCat(cat)
+    setEditCatName(cat.name)
+    setEditCatIcon(cat.icon ?? '📂')
+    setEditCatType(cat.type as 'expense' | 'income')
+    setEditCatColor(cat.color ?? PRESET_COLORS[0])
+  }
+
+  function handleCatTouchEnd(cat: Category) {
+    const now = Date.now()
+    if (now - (lastTap.current[cat.id] ?? 0) < 300) openEditCat(cat)
+    lastTap.current[cat.id] = now
+  }
+
+  async function handleEditCatSave() {
+    if (!editingCat || !editCatName.trim()) return
+    setSavingEditCat(true)
+    await updateCategory(editingCat.id, {
+      name: editCatName.trim(),
+      icon: editCatIcon,
+      type: editCatType,
+      color: editCatColor,
+    })
+    setSavingEditCat(false)
+    setEditingCat(null)
+  }
 
   async function handleAddCategory() {
     if (!newCatName.trim()) return
@@ -52,7 +86,11 @@ export default function CategoriasPage() {
             const catRules = rules.filter(r => r.category_id === cat.id)
             return (
               <div key={cat.id} className="bg-white rounded-2xl shadow-sm p-4">
-                <div className="flex items-center gap-2 mb-2">
+                <div
+                  className="flex items-center gap-2 mb-2 cursor-pointer select-none"
+                  onDoubleClick={() => openEditCat(cat)}
+                  onTouchEnd={() => handleCatTouchEnd(cat)}
+                >
                   <span className="text-lg">{cat.icon}</span>
                   <p className="text-sm font-semibold text-gray-800">{cat.name}</p>
                   <span className="text-xs text-gray-400">{cat.type === 'expense' ? 'Despesa' : 'Rendimento'}</span>
@@ -190,6 +228,71 @@ export default function CategoriasPage() {
           </button>
         )}
       </section>
+
+      {editingCat && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setEditingCat(null)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl max-w-md mx-auto">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
+              <p className="font-semibold text-gray-900">Editar categoria</p>
+              <button onClick={() => setEditingCat(null)} className="text-gray-400 text-xl">✕</button>
+            </div>
+            <div className="px-4 py-4 pb-8 flex flex-col gap-3">
+              <div className="flex gap-2">
+                <input
+                  value={editCatIcon}
+                  onChange={e => setEditCatIcon(e.target.value)}
+                  placeholder="📂"
+                  className="w-14 border border-gray-200 rounded-lg px-2 py-2 text-center text-lg"
+                />
+                <input
+                  autoFocus
+                  value={editCatName}
+                  onChange={e => setEditCatName(e.target.value)}
+                  placeholder="Nome da categoria"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                />
+              </div>
+              <select
+                value={editCatType}
+                onChange={e => setEditCatType(e.target.value as 'expense' | 'income')}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="expense">Despesa</option>
+                <option value="income">Rendimento</option>
+              </select>
+              <div>
+                <p className="text-xs text-gray-400 uppercase font-semibold mb-2">Cor</p>
+                <div className="flex gap-2 flex-wrap">
+                  {PRESET_COLORS.map(color => (
+                    <button
+                      key={color}
+                      onClick={() => setEditCatColor(color)}
+                      className={`w-7 h-7 rounded-full border-2 ${editCatColor === color ? 'border-gray-800' : 'border-transparent'}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEditCatSave}
+                  disabled={savingEditCat || !editCatName.trim()}
+                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold disabled:opacity-40"
+                >
+                  {savingEditCat ? 'A guardar…' : 'Guardar'}
+                </button>
+                <button
+                  onClick={() => setEditingCat(null)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

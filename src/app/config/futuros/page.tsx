@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { usePlannedItems } from '@/hooks/usePlannedItems'
+import { usePlannedItems, type PlannedItem } from '@/hooks/usePlannedItems'
 import { useCategories } from '@/hooks/useCategories'
 import PlannedItemForm, { type PlannedFormData } from '@/components/PlannedItemForm'
 import { formatCurrency } from '@/lib/format'
@@ -13,13 +13,34 @@ function formatDate(dateStr: string): string {
 }
 
 export default function FuturosPage() {
-  const { items, addItem, removeItem } = usePlannedItems()
+  const { items, addItem, updateItem, removeItem } = usePlannedItems()
   const { categories } = useCategories()
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingItem, setEditingItem] = useState<PlannedItem | null>(null)
+  const lastTap = useRef<Record<string, number>>({})
 
   async function handleAdd(data: PlannedFormData) {
     await addItem(data)
     setShowAddForm(false)
+  }
+
+  async function handleEdit(data: PlannedFormData) {
+    if (!editingItem) return
+    await updateItem(editingItem.id, {
+      name: data.name,
+      amount: data.amount,
+      type: data.type,
+      planned_date: data.planned_date,
+      category_id: data.category_id,
+      notes: data.notes,
+    })
+    setEditingItem(null)
+  }
+
+  function handleTouchEnd(item: PlannedItem) {
+    const now = Date.now()
+    if (now - (lastTap.current[item.id] ?? 0) < 300) setEditingItem(item)
+    lastTap.current[item.id] = now
   }
 
   function getCategoryName(categoryId: string | null): string | null {
@@ -41,7 +62,12 @@ export default function FuturosPage() {
           {items.map(item => {
             const catName = getCategoryName(item.category_id)
             return (
-              <div key={item.id} className="flex justify-between items-start px-4 py-3">
+              <div
+                key={item.id}
+                className="flex justify-between items-start px-4 py-3 cursor-pointer select-none"
+                onDoubleClick={() => setEditingItem(item)}
+                onTouchEnd={() => handleTouchEnd(item)}
+              >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-800">{item.name}</p>
                   <p className="text-xs text-gray-400">
@@ -84,6 +110,33 @@ export default function FuturosPage() {
           </button>
         )}
       </section>
+
+      {editingItem && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setEditingItem(null)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl max-w-md mx-auto">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
+              <p className="font-semibold text-gray-900">Editar item futuro</p>
+              <button onClick={() => setEditingItem(null)} className="text-gray-400 text-xl">✕</button>
+            </div>
+            <div className="px-4 py-4 pb-8">
+              <PlannedItemForm
+                categories={categories}
+                initialData={{
+                  name: editingItem.name,
+                  amount: editingItem.amount,
+                  type: editingItem.type as 'expense' | 'income',
+                  planned_date: editingItem.planned_date,
+                  category_id: editingItem.category_id,
+                  notes: editingItem.notes,
+                }}
+                onSave={handleEdit}
+                onCancel={() => setEditingItem(null)}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

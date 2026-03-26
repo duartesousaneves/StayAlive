@@ -15,17 +15,18 @@ export interface PlannedFormData {
 
 interface Props {
   categories: Category[]
+  initialData?: PlannedFormData
   onSave: (data: PlannedFormData) => Promise<void>
   onCancel: () => void
 }
 
-export default function PlannedItemForm({ categories, onSave, onCancel }: Props) {
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [type, setType] = useState<'expense' | 'income'>('expense')
-  const [plannedDate, setPlannedDate] = useState('')
-  const [categoryId, setCategoryId] = useState('')
-  const [notes, setNotes] = useState('')
+export default function PlannedItemForm({ categories, initialData, onSave, onCancel }: Props) {
+  const [name, setName] = useState(initialData?.name ?? '')
+  const [amount, setAmount] = useState(initialData ? initialData.amount.toFixed(2).replace('.', ',') : '')
+  const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? 'expense')
+  const [plannedDate, setPlannedDate] = useState(initialData?.planned_date ?? '')
+  const [categoryId, setCategoryId] = useState(initialData?.category_id ?? '')
+  const [notes, setNotes] = useState(initialData?.notes ?? '')
   const [saving, setSaving] = useState(false)
 
   const filteredCategories = categories.filter(c => c.type === type)

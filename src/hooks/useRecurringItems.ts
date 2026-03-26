@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
 
-type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
+export type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
 type InsertItem = Database['public']['Tables']['recurring_items']['Insert']
 
 export function useRecurringItems() {
@@ -32,6 +32,14 @@ export function useRecurringItems() {
     await fetchItems()
   }
 
+  async function updateItem(id: string, item: Omit<InsertItem, 'user_id'>) {
+    const supabase = createClient()
+    await (supabase.from('recurring_items') as any)
+      .update(item)
+      .eq('id', id)
+    await fetchItems()
+  }
+
   async function removeItem(id: string) {
     const supabase = createClient()
     await (supabase.from('recurring_items') as any)
@@ -40,5 +48,5 @@ export function useRecurringItems() {
     await fetchItems()
   }
 
-  return { items, loading, addItem, removeItem, refetch: fetchItems }
+  return { items, loading, addItem, updateItem, removeItem, refetch: fetchItems }
 }

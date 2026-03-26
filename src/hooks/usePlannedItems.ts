@@ -3,10 +3,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
 
-type PlannedItem = Database['public']['Tables']['planned_items']['Row']
+export type PlannedItem = Database['public']['Tables']['planned_items']['Row']
 type PlannedItemInsert = Database['public']['Tables']['planned_items']['Insert']
-
-export type { PlannedItem }
 
 export function usePlannedItems() {
   const [items, setItems] = useState<PlannedItem[]>([])
@@ -34,6 +32,14 @@ export function usePlannedItems() {
     await fetchItems()
   }
 
+  async function updateItem(id: string, item: Omit<PlannedItemInsert, 'user_id'>) {
+    const supabase = createClient()
+    await (supabase.from('planned_items') as any)
+      .update(item)
+      .eq('id', id)
+    await fetchItems()
+  }
+
   async function removeItem(id: string) {
     const supabase = createClient()
     await (supabase.from('planned_items') as any)
@@ -42,5 +48,5 @@ export function usePlannedItems() {
     await fetchItems()
   }
 
-  return { items, loading, addItem, removeItem, refetch: fetchItems }
+  return { items, loading, addItem, updateItem, removeItem, refetch: fetchItems }
 }

@@ -35,11 +35,17 @@ export function useCategories() {
     await fetchData()
   }
 
+  async function updateCategory(id: string, data: Partial<Pick<Category, 'name' | 'icon' | 'type' | 'color'>>): Promise<void> {
+    const supabase = createClient()
+    await (supabase.from('categories') as any).update(data).eq('id', id)
+    await fetchData()
+  }
+
   async function deleteCategory(id: string): Promise<void> {
     const supabase = createClient()
     await (supabase.from('categories') as any).delete().eq('id', id)
     await fetchData()
   }
 
-  return { categories, rules, loading, refetch: fetchData, addCategory, deleteCategory }
+  return { categories, rules, loading, refetch: fetchData, addCategory, updateCategory, deleteCategory }
 }

@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useAccounts } from '@/hooks/useAccounts'
+import { useAccounts, type Account } from '@/hooks/useAccounts'
 import AccountFormSheet from '@/components/AccountFormSheet'
 import { formatCurrency } from '@/lib/format'
 
@@ -51,10 +51,12 @@ function accountTypeLabel(type: string) {
 }
 
 export default function ContasPage() {
-  const { accounts, updateBalance, setDefault, createAccount, deleteAccount, getTransactionCount } = useAccounts()
+  const { accounts, updateBalance, updateAccount, setDefault, createAccount, deleteAccount, getTransactionCount } = useAccounts()
   const [showAddAccount, setShowAddAccount] = useState(false)
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null)
   const [balanceInput, setBalanceInput] = useState('')
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null)
+  const lastTap = useRef<Record<string, number>>({})
 
   function startEditBalance(accountId: string, currentBalance: number) {
     setEditingAccountId(accountId)
@@ -69,6 +71,23 @@ export default function ContasPage() {
     setEditingAccountId(null)
   }
 
+  function handleAccountTouchEnd(account: Account) {
+    const now = Date.now()
+    if (now - (lastTap.current[account.id] ?? 0) < 300) setEditingAccount(account)
+    lastTap.current[account.id] = now
+  }
+
+  async function handleAccountEdit(data: Parameters<typeof createAccount>[0]) {
+    if (!editingAccount) return
+    await updateAccount(editingAccount.id, {
+      name: data.name,
+      balance: data.balance,
+      credit_limit: data.credit_limit ?? null,
+      statement_close_day: data.statement_close_day ?? null,
+    })
+    setEditingAccount(null)
+  }
+
   return (
     <div className="pt-4 pb-6 flex flex-col gap-6">
       <div className="px-4 flex items-center gap-3">
@@ -81,7 +100,12 @@ export default function ContasPage() {
       <section className="px-4">
         <div className="bg-white rounded-2xl shadow-sm divide-y divide-gray-50">
           {accounts.map(account => (
-            <div key={account.id} className="px-4 py-3">
+            <div
+              key={account.id}
+              className="px-4 py-3 cursor-pointer select-none"
+              onDoubleClick={() => setEditingAccount(account)}
+              onTouchEnd={() => handleAccountTouchEnd(account)}
+            >
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-2">
@@ -140,6 +164,13 @@ export default function ContasPage() {
           <AccountFormSheet
             onSave={createAccount}
             onClose={() => setShowAddAccount(false)}
+          />
+        )}
+        {editingAccount && (
+          <AccountFormSheet
+            account={editingAccount}
+            onSave={handleAccountEdit}
+            onClose={() => setEditingAccount(null)}
           />
         )}
       </section>

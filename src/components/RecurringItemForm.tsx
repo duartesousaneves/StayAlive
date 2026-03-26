@@ -16,6 +16,7 @@ export interface RecurringFormData {
 
 interface Props {
   categories: Category[]
+  initialData?: RecurringFormData
   onSave: (data: RecurringFormData) => Promise<void>
   onCancel: () => void
 }
@@ -47,13 +48,13 @@ function computeNextMonthlyDate(dayOfMonth: number): string {
   return d.toISOString().split('T')[0]
 }
 
-export default function RecurringItemForm({ categories, onSave, onCancel }: Props) {
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [type, setType] = useState<'expense' | 'income'>('expense')
-  const [frequency, setFrequency] = useState<RecurringFormData['frequency']>('monthly')
-  const [dayOfMonth, setDayOfMonth] = useState('')
-  const [categoryId, setCategoryId] = useState<string>('')
+export default function RecurringItemForm({ categories, initialData, onSave, onCancel }: Props) {
+  const [name, setName] = useState(initialData?.name ?? '')
+  const [amount, setAmount] = useState(initialData ? initialData.amount.toFixed(2).replace('.', ',') : '')
+  const [type, setType] = useState<'expense' | 'income'>(initialData?.type ?? 'expense')
+  const [frequency, setFrequency] = useState<RecurringFormData['frequency']>(initialData?.frequency ?? 'monthly')
+  const [dayOfMonth, setDayOfMonth] = useState(initialData?.day_of_month?.toString() ?? '')
+  const [categoryId, setCategoryId] = useState<string>(initialData?.category_id ?? '')
   const [saving, setSaving] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]

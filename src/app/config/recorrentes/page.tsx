@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
-import { useRecurringItems } from '@/hooks/useRecurringItems'
+import { useRecurringItems, type RecurringItem } from '@/hooks/useRecurringItems'
 import { useCategories } from '@/hooks/useCategories'
 import RecurringItemForm, { type RecurringFormData } from '@/components/RecurringItemForm'
 import { formatCurrency } from '@/lib/format'
@@ -14,13 +14,35 @@ const FREQUENCY_LABELS: Record<string, string> = {
 }
 
 export default function RecorrentesPage() {
-  const { items, addItem, removeItem } = useRecurringItems()
+  const { items, addItem, updateItem, removeItem } = useRecurringItems()
   const { categories } = useCategories()
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingItem, setEditingItem] = useState<RecurringItem | null>(null)
+  const lastTap = useRef<Record<string, number>>({})
 
   async function handleAdd(data: RecurringFormData) {
     await addItem(data)
     setShowAddForm(false)
+  }
+
+  async function handleEdit(data: RecurringFormData) {
+    if (!editingItem) return
+    await updateItem(editingItem.id, {
+      name: data.name,
+      amount: data.amount,
+      type: data.type,
+      frequency: data.frequency,
+      next_date: data.next_date,
+      day_of_month: data.day_of_month,
+      category_id: data.category_id,
+    })
+    setEditingItem(null)
+  }
+
+  function handleTouchEnd(item: RecurringItem) {
+    const now = Date.now()
+    if (now - (lastTap.current[item.id] ?? 0) < 300) setEditingItem(item)
+    lastTap.current[item.id] = now
   }
 
   function getCategoryName(categoryId: string | null): string | null {
@@ -42,7 +64,12 @@ export default function RecorrentesPage() {
           {items.map(item => {
             const catName = getCategoryName(item.category_id)
             return (
-              <div key={item.id} className="flex justify-between items-center px-4 py-3">
+              <div
+                key={item.id}
+                className="flex justify-between items-center px-4 py-3 cursor-pointer select-none"
+                onDoubleClick={() => setEditingItem(item)}
+                onTouchEnd={() => handleTouchEnd(item)}
+              >
                 <div>
                   <p className="text-sm text-gray-800">{item.name}</p>
                   <p className="text-xs text-gray-400">
@@ -83,6 +110,34 @@ export default function RecorrentesPage() {
           </button>
         )}
       </section>
+
+      {editingItem && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setEditingItem(null)} />
+          <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl max-w-md mx-auto">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
+              <p className="font-semibold text-gray-900">Editar item fixo</p>
+              <button onClick={() => setEditingItem(null)} className="text-gray-400 text-xl">✕</button>
+            </div>
+            <div className="px-4 py-4 pb-8">
+              <RecurringItemForm
+                categories={categories}
+                initialData={{
+                  name: editingItem.name,
+                  amount: editingItem.amount,
+                  type: editingItem.type as 'expense' | 'income',
+                  frequency: editingItem.frequency as RecurringFormData['frequency'],
+                  next_date: editingItem.next_date ?? new Date().toISOString().split('T')[0],
+                  day_of_month: editingItem.day_of_month,
+                  category_id: editingItem.category_id,
+                }}
+                onSave={handleEdit}
+                onCancel={() => setEditingItem(null)}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
