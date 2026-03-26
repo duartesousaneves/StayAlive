@@ -37,5 +37,17 @@ export function useTransactions(limit?: number) {
     await fetchTransactions()
   }
 
-  return { transactions, loading, insertTransactions, refetch: fetchTransactions }
+  async function insertTransaction(txn: Omit<Transaction, 'id' | 'user_id' | 'created_at'>): Promise<Transaction | null> {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+    const result = await (supabase.from('transactions') as any)
+      .insert({ ...txn, user_id: user.id })
+      .select()
+      .single()
+    await fetchTransactions()
+    return (result as { data: Transaction | null }).data
+  }
+
+  return { transactions, loading, insertTransactions, insertTransaction, refetch: fetchTransactions }
 }
