@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import AccountCarousel from '@/components/AccountCarousel'
 import AccountFormSheet from '@/components/AccountFormSheet'
 import AlertBanner from '@/components/AlertBanner'
@@ -28,7 +28,34 @@ export default function DashboardPage() {
   const { transactions, refetch: refetchTxns } = useTransactions(50)
   const { categories, rules } = useCategories()
   const { tags, getOrCreateTag, getAssignedTagIds } = useTransactionTags()
-  const projection = useProjection(defaultAccount?.balance ?? null, items, plannedItems)
+
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
+  const selectedAccountInitialized = useRef(false)
+
+  // Initialize selectedAccount once defaultAccount is loaded
+  useEffect(() => {
+    if (!selectedAccountInitialized.current && defaultAccount) {
+      setSelectedAccount(defaultAccount)
+      selectedAccountInitialized.current = true
+    }
+  }, [defaultAccount])
+
+  const filteredRecurring = selectedAccount
+    ? items.filter(item =>
+        item.account_id === selectedAccount.id ||
+        (item.account_id === null && selectedAccount.is_default)
+      )
+    : items
+
+  const filteredPlanned = selectedAccount
+    ? plannedItems.filter(item =>
+        item.account_id === selectedAccount.id ||
+        (item.account_id === null && selectedAccount.is_default)
+      )
+    : plannedItems
+
+  const projectionBalance = selectedAccount?.balance ?? defaultAccount?.balance ?? null
+  const projection = useProjection(projectionBalance, filteredRecurring, filteredPlanned)
 
   const [showImport, setShowImport] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
@@ -103,6 +130,8 @@ export default function DashboardPage() {
     <div className="pb-6">
       <AccountCarousel
         accounts={accounts}
+        selectedAccountId={selectedAccount?.id ?? null}
+        onSelectAccount={setSelectedAccount}
         onEditAccount={setEditingAccount}
         onAddAccount={() => setShowAddAccount(true)}
       />
