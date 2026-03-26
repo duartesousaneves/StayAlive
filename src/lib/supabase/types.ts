@@ -200,6 +200,7 @@ export type Database = {
           next_date: string
           active: boolean
           category_id: string | null
+          account_id: string | null
         }
         Insert: {
           id?: string
@@ -213,6 +214,7 @@ export type Database = {
           next_date: string
           active?: boolean
           category_id?: string | null
+          account_id?: string | null
         }
         Update: {
           name?: string
@@ -224,6 +226,7 @@ export type Database = {
           next_date?: string
           active?: boolean
           category_id?: string | null
+          account_id?: string | null
         }
         Relationships: [
           {
@@ -231,6 +234,13 @@ export type Database = {
             columns: ['category_id']
             isOneToOne: false
             referencedRelation: 'categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recurring_items_account_id_fkey'
+            columns: ['account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
             referencedColumns: ['id']
           }
         ]
@@ -247,6 +257,7 @@ export type Database = {
           notes: string | null
           active: boolean
           created_at: string
+          account_id: string | null
         }
         Insert: {
           id?: string
@@ -259,6 +270,7 @@ export type Database = {
           notes?: string | null
           active?: boolean
           created_at?: string
+          account_id?: string | null
         }
         Update: {
           name?: string
@@ -268,6 +280,7 @@ export type Database = {
           category_id?: string | null
           notes?: string | null
           active?: boolean
+          account_id?: string | null
         }
         Relationships: [
           {
@@ -275,6 +288,13 @@ export type Database = {
             columns: ['category_id']
             isOneToOne: false
             referencedRelation: 'categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'planned_items_account_id_fkey'
+            columns: ['account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
             referencedColumns: ['id']
           }
         ]
