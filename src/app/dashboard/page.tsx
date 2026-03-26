@@ -16,6 +16,7 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
 import { useTransactionEdit } from '@/hooks/useTransactionEdit'
 import { useTransactionTags } from '@/hooks/useTransactionTags'
+import { filterItemsByAccount } from '@/lib/filterItemsByAccount'
 import { categorize } from '@/lib/categorize'
 import { createClient } from '@/lib/supabase/client'
 import { extractKeyword } from '@/lib/keywords'
@@ -40,20 +41,8 @@ export default function DashboardPage() {
     }
   }, [defaultAccount])
 
-  const filteredRecurring = selectedAccount
-    ? items.filter(item =>
-        item.account_id === selectedAccount.id ||
-        (item.account_id === null && selectedAccount.is_default)
-      )
-    : items
-
-  const filteredPlanned = selectedAccount
-    ? plannedItems.filter(item =>
-        item.account_id === selectedAccount.id ||
-        (item.account_id === null && selectedAccount.is_default)
-      )
-    : plannedItems
-
+  const filteredRecurring = filterItemsByAccount(items, selectedAccount)
+  const filteredPlanned = filterItemsByAccount(plannedItems, selectedAccount)
   const projectionBalance = selectedAccount?.balance ?? defaultAccount?.balance ?? null
   const projection = useProjection(projectionBalance, filteredRecurring, filteredPlanned)
 
