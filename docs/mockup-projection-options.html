@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup – Projeção por Conta</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; padding: 24px; }
+  h1 { text-align: center; font-size: 18px; color: #333; margin-bottom: 24px; font-weight: 600; }
+  .options { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+  .option { background: white; border-radius: 16px; padding: 20px; width: 320px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .option-label { font-size: 13px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .option-title { font-size: 15px; font-weight: 600; color: #111; margin-bottom: 4px; }
+  .option-desc { font-size: 12px; color: #888; margin-bottom: 16px; line-height: 1.5; }
+
+  /* Phone frame */
+  .phone { background: #f9fafb; border-radius: 20px; border: 1.5px solid #e5e7eb; overflow: hidden; }
+
+  /* Account carousel */
+  .carousel { background: #1e3a5f; padding: 16px 12px 12px; }
+  .carousel-title { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .carousel-cards { display: flex; gap: 8px; overflow: hidden; }
+  .card { border-radius: 12px; padding: 12px; flex-shrink: 0; }
+  .card-active { background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.35); width: 130px; }
+  .card-inactive { background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.1); width: 110px; opacity: 0.7; }
+  .card-name { font-size: 10px; color: rgba(255,255,255,0.7); margin-bottom: 4px; }
+  .card-balance { font-size: 14px; font-weight: 700; color: white; }
+  .card-type { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .card-dot { width: 6px; height: 6px; border-radius: 50%; background: #60a5fa; display: inline-block; margin-bottom: 2px; }
+
+  /* Body section */
+  .body { padding: 12px; }
+
+  /* Alert */
+  .alert { background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; font-size: 11px; color: #dc2626; }
+
+  /* Projection section */
+  .proj-section { background: white; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .proj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .proj-title { font-size: 12px; font-weight: 600; color: #374151; }
+  .proj-subtitle { font-size: 10px; color: #9ca3af; }
+
+  /* Mini chart */
+  .chart { height: 60px; background: #f9fafb; border-radius: 8px; position: relative; overflow: hidden; }
+  .chart-line { position: absolute; bottom: 0; left: 0; right: 0; height: 100%; }
+  .chart-positive { background: linear-gradient(180deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%); }
+  .chart-mixed { background: linear-gradient(180deg, rgba(59,130,246,0.15) 0%, rgba(239,68,68,0.1) 100%); }
+  svg.sparkline { width: 100%; height: 100%; }
+
+  /* Tab selector (Option B) */
+  .tab-row { display: flex; gap: 4px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 2px; }
+  .tab { font-size: 10px; padding: 4px 10px; border-radius: 20px; border: none; cursor: pointer; white-space: nowrap; }
+  .tab-active { background: #2563eb; color: white; font-weight: 600; }
+  .tab-inactive { background: #f3f4f6; color: #6b7280; }
+
+  /* Option C dual chart */
+  .dual { display: flex; flex-direction: column; gap: 6px; }
+  .chart-sm { height: 44px; background: #f9fafb; border-radius: 8px; overflow: hidden; position: relative; }
+  .chart-label { font-size: 9px; color: #9ca3af; margin-bottom: 2px; }
+
+  /* Annotation arrows */
+  .annotation { position: relative; }
+  .arrow { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .arrow-line { flex: 1; height: 1px; background: #d1d5db; }
+  .arrow-text { font-size: 10px; color: #2563eb; font-weight: 600; white-space: nowrap; }
+  .highlight-ring { outline: 2px solid #2563eb; outline-offset: 2px; border-radius: 12px; }
+
+  /* Pros/cons */
+  .pros-cons { margin-top: 12px; display: flex; gap: 8px; }
+  .pros, .cons { flex: 1; }
+  .pros-cons-title { font-size: 10px; font-weight: 700; margin-bottom: 4px; }
+  .pros .pros-cons-title { color: #16a34a; }
+  .cons .pros-cons-title { color: #dc2626; }
+  .pc-item { font-size: 10px; color: #555; line-height: 1.5; display: flex; gap: 4px; }
+  .pc-item::before { content: '•'; }
+</style>
+</head>
+<body>
+
+<h1>Projeção por Conta — Comparação de Opções</h1>
+
+<div class="options">
+
+  <!-- OPTION A -->
+  <div class="option">
+    <div class="option-label">Opção A</div>
+    <div class="option-title">Seleção via Carrossel</div>
+    <div class="option-desc">Ao fazer scroll no carrossel de contas, o gráfico de projeção atualiza automaticamente para a conta selecionada.</div>
+
+    <div class="phone">
+      <div class="carousel">
+        <div class="carousel-title">As minhas contas</div>
+        <div class="carousel-cards">
+          <div class="card card-active highlight-ring">
+            <div class="card-dot"></div>
+            <div class="card-name">Conta à Ordem</div>
+            <div class="card-balance">2.340 €</div>
+            <div class="card-type">Checking</div>
+          </div>
+          <div class="card card-inactive">
+            <div class="card-name">Cartão Crédito</div>
+            <div class="card-balance">-450 €</div>
+            <div class="card-type">Credit Card</div>
+          </div>
+          <div class="card card-inactive">
+            <div class="card-name">Cash</div>
+            <div class="card-balance">120 €</div>
+            <div class="card-type">Cash</div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="proj-section">
+          <div class="proj-header">
+            <div class="proj-title">Projeção · Conta à Ordem</div>
+            <div class="proj-subtitle">30 dias</div>
+          </div>
+          <div class="chart chart-positive">
+            <svg class="sparkline" viewBox="0 0 280 60" preserveAspectRatio="none">
+              <polyline points="0,45 35,40 70,35 105,38 140,30 175,25 210,28 245,20 280,15"
+                fill="rgba(34,197,94,0.12)" stroke="#22c55e" stroke-width="2" />
+            </svg>
+          </div>
+          <div style="margin-top:6px; font-size:10px; color:#9ca3af; text-align:center;">
+            ← Desliza no carrossel para mudar de conta →
+          </div>
+        </div>
+        <div style="background:#f3f4f6; border-radius:8px; padding:8px; font-size:10px; color:#6b7280; text-align:center;">
+          Resumo do mês · Transações recentes…
+        </div>
+      </div>
+    </div>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <div class="pros-cons-title">+ Pontos fortes</div>
+        <div class="pc-item">Integrado com o carrossel existente</div>
+        <div class="pc-item">Menos elementos de UI novos</div>
+        <div class="pc-item">Gesto natural (scroll)</div>
+      </div>
+      <div class="cons">
+        <div class="cons-cons-title" style="font-size:10px;font-weight:700;color:#dc2626;margin-bottom:4px;">− Pontos fracos</div>
+        <div class="pc-item">Ligação implícita entre carrossel e gráfico</div>
+        <div class="pc-item">Pode confundir: saldo do carrossel ≠ projeção?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="option">
+    <div class="option-label">Opção B</div>
+    <div class="option-title">Separador acima do gráfico</div>
+    <div class="option-desc">Um seletor de conta independente e dedicado, posicionado diretamente acima do gráfico de projeção.</div>
+
+    <div class="phone">
+      <div class="carousel">
+        <div class="carousel-title">As minhas contas</div>
+        <div class="carousel-cards">
+          <div class="card card-active">
+            <div class="card-dot"></div>
+            <div class="card-name">Conta à Ordem</div>
+            <div class="card-balance">2.340 €</div>
+            <div class="card-type">Checking</div>
+          </div>
+          <div class="card card-inactive">
+            <div class="card-name">Cartão Crédito</div>
+            <div class="card-balance">-450 €</div>
+            <div class="card-type">Credit Card</div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="proj-section">
+          <div class="proj-header">
+            <div class="proj-title">Projeção a 30 dias</div>
+          </div>
+          <div class="tab-row highlight-ring">
+            <button class="tab tab-inactive">Todas</button>
+            <button class="tab tab-active">À Ordem</button>
+            <button class="tab tab-inactive">Crédito</button>
+            <button class="tab tab-inactive">Cash</button>
+          </div>
+          <div class="chart chart-positive">
+            <svg class="sparkline" viewBox="0 0 280 60" preserveAspectRatio="none">
+              <polyline points="0,45 35,40 70,35 105,38 140,30 175,25 210,28 245,20 280,15"
+                fill="rgba(34,197,94,0.12)" stroke="#22c55e" stroke-width="2" />
+            </svg>
+          </div>
+        </div>
+        <div style="background:#f3f4f6; border-radius:8px; padding:8px; font-size:10px; color:#6b7280; text-align:center;">
+          Resumo do mês · Transações recentes…
+        </div>
+      </div>
+    </div>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <div class="pros-cons-title">+ Pontos fortes</div>
+        <div class="pc-item">Explícito e claro</div>
+        <div class="pc-item">Tab "Todas" dá visão consolidada</div>
+        <div class="pc-item">Independente do carrossel</div>
+      </div>
+      <div class="cons">
+        <div class="cons-cons-title" style="font-size:10px;font-weight:700;color:#dc2626;margin-bottom:4px;">− Pontos fracos</div>
+        <div class="pc-item">Mais UI a gerir</div>
+        <div class="pc-item">Pode duplicar a função do carrossel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION C -->
+  <div class="option">
+    <div class="option-label">Opção C</div>
+    <div class="option-title">Conta ativa + Total consolidado</div>
+    <div class="option-desc">O gráfico principal mostra a conta selecionada no carrossel. Um segundo gráfico menor mostra o total de todas as contas.</div>
+
+    <div class="phone">
+      <div class="carousel">
+        <div class="carousel-title">As minhas contas</div>
+        <div class="carousel-cards">
+          <div class="card card-active highlight-ring">
+            <div class="card-dot"></div>
+            <div class="card-name">Conta à Ordem</div>
+            <div class="card-balance">2.340 €</div>
+            <div class="card-type">Checking</div>
+          </div>
+          <div class="card card-inactive">
+            <div class="card-name">Cartão Crédito</div>
+            <div class="card-balance">-450 €</div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <div class="proj-section">
+          <div class="proj-header">
+            <div class="proj-title">Projeção · Conta à Ordem</div>
+            <div class="proj-subtitle">30 dias</div>
+          </div>
+          <div class="chart chart-positive" style="height:52px;">
+            <svg class="sparkline" viewBox="0 0 280 52" preserveAspectRatio="none">
+              <polyline points="0,40 35,35 70,30 105,33 140,25 175,20 210,23 245,15 280,10"
+                fill="rgba(34,197,94,0.12)" stroke="#22c55e" stroke-width="2" />
+            </svg>
+          </div>
+
+          <div style="margin-top:8px; border-top: 1px solid #f3f4f6; padding-top:8px;" class="highlight-ring">
+            <div style="font-size:10px; color:#9ca3af; margin-bottom:4px;">Total consolidado (todas as contas)</div>
+            <div class="chart chart-mixed" style="height:36px;">
+              <svg class="sparkline" viewBox="0 0 280 36" preserveAspectRatio="none">
+                <polyline points="0,20 35,18 70,15 105,17 140,13 175,10 210,12 245,22 280,28"
+                  fill="rgba(239,68,68,0.08)" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,2" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div style="background:#f3f4f6; border-radius:8px; padding:8px; font-size:10px; color:#6b7280; text-align:center;">
+          Resumo do mês · Transações recentes…
+        </div>
+      </div>
+    </div>
+
+    <div class="pros-cons">
+      <div class="pros">
+        <div class="pros-cons-title">+ Pontos fortes</div>
+        <div class="pc-item">Visão de detalhe e consolidada ao mesmo tempo</div>
+        <div class="pc-item">Consistente com o carrossel</div>
+      </div>
+      <div class="cons">
+        <div class="cons-cons-title" style="font-size:10px;font-weight:700;color:#dc2626;margin-bottom:4px;">− Pontos fracos</div>
+        <div class="pc-item">Mais complexo visualmente</div>
+        <div class="pc-item">Dois gráficos podem sobrecarregar o ecrã</div>
+        <div class="pc-item">Mais lógica de projeção a implementar</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align:center; margin-top:24px; font-size:11px; color:#aaa;">Os elementos sublinhados a azul indicam o componente novo/alterado em cada opção.</p>
+
+</body>
+</html>
