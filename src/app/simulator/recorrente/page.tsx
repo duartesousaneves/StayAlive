@@ -14,7 +14,7 @@ const FREQUENCY_LABELS: Record<string, string> = {
   yearly: 'Anual',
 }
 
-export default function RecorrentesPage() {
+export default function SimulatorRecorrentePage() {
   const { items, addItem, updateItem, removeItem } = useRecurringItems()
   const { categories } = useCategories()
   const { accounts } = useAccounts()
@@ -38,6 +38,8 @@ export default function RecorrentesPage() {
       day_of_month: data.day_of_month,
       category_id: data.category_id,
       account_id: data.account_id,
+      start_date: data.start_date,
+      end_date: data.end_date,
     })
     setEditingItem(null)
   }
@@ -61,8 +63,8 @@ export default function RecorrentesPage() {
   return (
     <div className="pt-4 pb-6 flex flex-col gap-6">
       <div className="px-4 flex items-center gap-3">
-        <Link href="/config" className="text-blue-600 flex items-center gap-1 text-sm">
-          ‹ Configurações
+        <Link href="/simulator" className="text-blue-600 flex items-center gap-1 text-sm">
+          ‹ Registar
         </Link>
       </div>
       <h1 className="text-xl font-bold text-gray-900 px-4">Despesas e Rendimentos Fixos</h1>
@@ -143,6 +145,8 @@ export default function RecorrentesPage() {
                   day_of_month: editingItem.day_of_month,
                   category_id: editingItem.category_id,
                   account_id: editingItem.account_id,
+                  start_date: editingItem.start_date ?? null,
+                  end_date: editingItem.end_date ?? null,
                 }}
                 onSave={handleEdit}
                 onCancel={() => setEditingItem(null)}

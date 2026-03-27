@@ -13,7 +13,7 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function FuturosPage() {
+export default function SimulatorPontualPage() {
   const { items, addItem, updateItem, removeItem } = usePlannedItems()
   const { categories } = useCategories()
   const { accounts } = useAccounts()
@@ -59,8 +59,8 @@ export default function FuturosPage() {
   return (
     <div className="pt-4 pb-6 flex flex-col gap-6">
       <div className="px-4 flex items-center gap-3">
-        <Link href="/config" className="text-blue-600 flex items-center gap-1 text-sm">
-          ‹ Configurações
+        <Link href="/simulator" className="text-blue-600 flex items-center gap-1 text-sm">
+          ‹ Registar
         </Link>
       </div>
       <h1 className="text-xl font-bold text-gray-900 px-4">Despesas e Rendimentos Futuros</h1>

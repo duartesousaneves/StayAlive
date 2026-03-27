@@ -14,6 +14,8 @@ export interface RecurringFormData {
   day_of_month: number | null
   category_id: string | null
   account_id: string | null
+  start_date: string | null
+  end_date: string | null
 }
 
 interface Props {
@@ -59,6 +61,9 @@ export default function RecurringItemForm({ categories, accounts, initialData, o
   const [dayOfMonth, setDayOfMonth] = useState(initialData?.day_of_month?.toString() ?? '')
   const [categoryId, setCategoryId] = useState<string>(initialData?.category_id ?? '')
   const [accountId, setAccountId] = useState<string>(initialData?.account_id ?? '')
+  const [startDate, setStartDate] = useState(initialData?.start_date ?? '')
+  const [endDate, setEndDate] = useState(initialData?.end_date ?? '')
+  const [showDates, setShowDates] = useState(!!(initialData?.start_date || initialData?.end_date))
   const [saving, setSaving] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
@@ -82,6 +87,8 @@ export default function RecurringItemForm({ categories, accounts, initialData, o
       day_of_month: dom,
       category_id: categoryId || null,
       account_id: accountId || null,
+      start_date: showDates && startDate ? startDate : null,
+      end_date: showDates && endDate ? endDate : null,
     })
     setSaving(false)
   }
@@ -161,6 +168,38 @@ export default function RecurringItemForm({ categories, accounts, initialData, o
           <option key={a.id} value={a.id}>{a.name}</option>
         ))}
       </select>
+
+      <button
+        type="button"
+        onClick={() => setShowDates(v => !v)}
+        className="text-xs text-blue-600 text-left"
+      >
+        {showDates ? '– Remover datas de início/fim' : '+ Definir data de início/fim (opcional)'}
+      </button>
+
+      {showDates && (
+        <div className="flex flex-col gap-2">
+          <div>
+            <label className="text-xs text-gray-400 uppercase font-semibold">Data de início</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 uppercase font-semibold">Data de fim</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              className="w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <button
           onClick={handleSave}
