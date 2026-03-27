@@ -26,6 +26,12 @@ const options = [
     label: 'Pagamento de Cartão',
     description: 'Agendar o pagamento de um cartão de crédito',
   },
+  {
+    href: '/simulator/transferencia',
+    icon: '↔️',
+    label: 'Transferência / ATM',
+    description: 'Mover dinheiro entre contas ou levantar no ATM',
+  },
 ]
 
 export default function RegistarPage() {
