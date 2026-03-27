@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { usePlannedItems, type PlannedItem } from '@/hooks/usePlannedItems'
 import { useCategories } from '@/hooks/useCategories'
 import { useAccounts } from '@/hooks/useAccounts'
-import PlannedItemForm, { type PlannedFormData } from '@/components/PlannedItemForm'
+import PlannedItemForm, { type PlannedFormData, type ConvertToRecurringData } from '@/components/PlannedItemForm'
+import { useRecurringItems } from '@/hooks/useRecurringItems'
 import { formatCurrency } from '@/lib/format'
 
 function formatDate(dateStr: string): string {
@@ -15,10 +16,12 @@ function formatDate(dateStr: string): string {
 
 export default function SimulatorPontualPage() {
   const { items, addItem, updateItem, removeItem } = usePlannedItems()
+  const { addItem: addRecurringItem } = useRecurringItems()
   const { categories } = useCategories()
   const { accounts } = useAccounts()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingItem, setEditingItem] = useState<PlannedItem | null>(null)
+  const [convertedName, setConvertedName] = useState<string | null>(null)
   const lastTap = useRef<Record<string, number>>({})
 
   async function handleAdd(data: PlannedFormData) {
@@ -40,6 +43,26 @@ export default function SimulatorPontualPage() {
     setEditingItem(null)
   }
 
+  async function handleConvertToRecurring(data: ConvertToRecurringData) {
+    if (!editingItem) return
+    await addRecurringItem({
+      name: data.name,
+      amount: data.amount,
+      type: data.type,
+      category_id: data.category_id,
+      account_id: data.account_id,
+      frequency: data.frequency,
+      next_date: data.next_date,
+      start_date: data.start_date,
+      end_date: data.end_date,
+      active: true,
+    })
+    await removeItem(editingItem.id)
+    setConvertedName(data.name)
+    setEditingItem(null)
+    setTimeout(() => setConvertedName(null), 3000)
+  }
+
   function handleTouchEnd(item: PlannedItem) {
     const now = Date.now()
     if (now - (lastTap.current[item.id] ?? 0) < 300) setEditingItem(item)
@@ -58,6 +81,13 @@ export default function SimulatorPontualPage() {
 
   return (
     <div className="pt-4 pb-6 flex flex-col gap-6">
+      {convertedName && (
+        <div className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+          <div className="bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg">
+            "{convertedName}" convertido para recorrente
+          </div>
+        </div>
+      )}
       <div className="px-4 flex items-center gap-3">
         <Link href="/simulator" className="text-blue-600 flex items-center gap-1 text-sm">
           ‹ Registar
@@ -134,6 +164,7 @@ export default function SimulatorPontualPage() {
               <PlannedItemForm
                 categories={categories}
                 accounts={accounts}
+                isEditing
                 initialData={{
                   name: editingItem.name,
                   amount: editingItem.amount,
@@ -144,6 +175,7 @@ export default function SimulatorPontualPage() {
                   account_id: editingItem.account_id,
                 }}
                 onSave={handleEdit}
+                onConvertToRecurring={handleConvertToRecurring}
                 onCancel={() => setEditingItem(null)}
               />
             </div>
