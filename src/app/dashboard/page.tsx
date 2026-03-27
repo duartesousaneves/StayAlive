@@ -64,18 +64,22 @@ export default function DashboardPage() {
     }
   }, [editModal.state.transaction?.id])
 
+  const accountTransactions = selectedAccount
+    ? transactions.filter(t => t.account_id === selectedAccount.id)
+    : transactions
+
   // Auto-suggestions: run categorize over uncategorised transactions
   const suggestions = useMemo(() => {
     if (!rules.length) return {}
     const map: Record<string, string> = {}
-    for (const t of transactions) {
+    for (const t of accountTransactions) {
       if (!t.category_id) {
         const suggested = categorize(t.description, rules)
         if (suggested) map[t.id] = suggested
       }
     }
     return map
-  }, [transactions, rules])
+  }, [accountTransactions, rules])
 
   async function acceptSuggestion(transactionId: string, categoryId: string) {
     const supabase = createClient()
@@ -130,9 +134,9 @@ export default function DashboardPage() {
       {projection && (
         <ProjectionChart days={projection.days} criticalDay={projection.criticalDay} />
       )}
-      <MonthSummary transactions={transactions} onImportCSV={() => setShowImport(true)} />
+      <MonthSummary transactions={accountTransactions} accountName={selectedAccount?.name} onImportCSV={() => setShowImport(true)} />
       <RecentTransactions
-        transactions={transactions}
+        transactions={accountTransactions}
         categories={categories}
         suggestions={suggestions}
         onEditTransaction={editModal.open}

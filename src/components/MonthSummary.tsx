@@ -5,10 +5,11 @@ type Transaction = Database['public']['Tables']['transactions']['Row']
 
 interface Props {
   transactions: Transaction[]
+  accountName?: string
   onImportCSV: () => void
 }
 
-export default function MonthSummary({ transactions, onImportCSV }: Props) {
+export default function MonthSummary({ transactions, accountName, onImportCSV }: Props) {
   const now = new Date()
   const monthTxns = transactions.filter(t => {
     const d = new Date(t.date)
@@ -34,7 +35,7 @@ export default function MonthSummary({ transactions, onImportCSV }: Props) {
     <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
       <div className="flex items-baseline gap-1 mb-3">
         <p className="text-sm font-semibold text-gray-700">Resumo do mês</p>
-        <span className="text-xs text-gray-400">· todas as contas</span>
+        <span className="text-xs text-gray-400">· {accountName ?? 'todas as contas'}</span>
       </div>
       <div className="flex justify-between text-sm mb-2">
         <span className="text-red-600">Despesas: {formatCurrency(expenses)}</span>
