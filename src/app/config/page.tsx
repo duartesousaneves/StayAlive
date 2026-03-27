@@ -2,8 +2,6 @@ import Link from 'next/link'
 
 const sections = [
   { href: '/config/contas', icon: '🏦', label: 'Contas', description: 'Gerir contas bancárias e saldos' },
-  { href: '/config/recorrentes', icon: '🔁', label: 'Despesas e Rendimentos Fixos', description: 'Itens recorrentes mensais, semanais, etc.' },
-  { href: '/config/futuros', icon: '📅', label: 'Despesas e Rendimentos Futuros', description: 'Eventos previstos pontuais' },
   { href: '/config/categorias', icon: '🏷️', label: 'Categorias e Regras', description: 'Categorias e regras de classificação' },
   { href: '/config/conta', icon: '👤', label: 'Conta', description: 'Sessão e definições de conta' },
 ]

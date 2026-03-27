@@ -201,6 +201,8 @@ export type Database = {
           active: boolean
           category_id: string | null
           account_id: string | null
+          start_date: string | null
+          end_date: string | null
         }
         Insert: {
           id?: string
@@ -215,6 +217,8 @@ export type Database = {
           active?: boolean
           category_id?: string | null
           account_id?: string | null
+          start_date?: string | null
+          end_date?: string | null
         }
         Update: {
           name?: string
@@ -227,6 +231,8 @@ export type Database = {
           active?: boolean
           category_id?: string | null
           account_id?: string | null
+          start_date?: string | null
+          end_date?: string | null
         }
         Relationships: [
           {
