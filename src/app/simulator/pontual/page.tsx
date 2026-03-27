@@ -84,7 +84,7 @@ export default function SimulatorPontualPage() {
       {convertedName && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
           <div className="bg-purple-600 text-white text-sm font-medium px-4 py-2 rounded-full shadow-lg">
-            "{convertedName}" convertido para recorrente
+            &ldquo;{convertedName}&rdquo; convertido para recorrente
           </div>
         </div>
       )}

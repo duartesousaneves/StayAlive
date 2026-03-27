@@ -66,8 +66,12 @@ function expandOccurrences(
     if (candidate < d) candidate.setMonth(candidate.getMonth() + 1)
     d = candidate
   }
+  const startDate = item.start_date
+    ? (() => { const [sy, sm, sd] = item.start_date.split('-').map(Number); return new Date(sy, sm - 1, sd) })()
+    : null
+
   while (d <= end) {
-    if (d >= today) dates.push(new Date(d))
+    if (d >= today && (!startDate || d >= startDate)) dates.push(new Date(d))
     d = nextOccurrence(d, item)
   }
   return dates

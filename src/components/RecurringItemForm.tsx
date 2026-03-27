@@ -75,7 +75,9 @@ export default function RecurringItemForm({ categories, accounts, initialData, o
     if (!name.trim() || isNaN(n) || n <= 0) return
 
     const dom = frequency === 'monthly' && dayOfMonth ? parseInt(dayOfMonth, 10) : null
-    const nextDate = dom ? computeNextMonthlyDate(dom) : today
+    const computedNext = dom ? computeNextMonthlyDate(dom) : today
+    const effectiveStart = showDates && startDate ? startDate : null
+    const nextDate = effectiveStart && effectiveStart > computedNext ? effectiveStart : computedNext
 
     setSaving(true)
     await onSave({
