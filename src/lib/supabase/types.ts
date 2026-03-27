@@ -305,6 +305,57 @@ export type Database = {
           }
         ]
       }
+      card_payment_schedules: {
+        Row: {
+          id: string
+          user_id: string
+          credit_card_id: string
+          source_account_id: string
+          amount: number | null
+          percentage: number | null
+          planned_date: string
+          notes: string | null
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          credit_card_id: string
+          source_account_id: string
+          amount?: number | null
+          percentage?: number | null
+          planned_date: string
+          notes?: string | null
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          credit_card_id?: string
+          source_account_id?: string
+          amount?: number | null
+          percentage?: number | null
+          planned_date?: string
+          notes?: string | null
+          active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'card_payment_schedules_credit_card_id_fkey'
+            columns: ['credit_card_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'card_payment_schedules_source_account_id_fkey'
+            columns: ['source_account_id']
+            isOneToOne: false
+            referencedRelation: 'accounts'
+            referencedColumns: ['id']
+          }
+        ]
+      }
       user_settings: {
         Row: {
           user_id: string

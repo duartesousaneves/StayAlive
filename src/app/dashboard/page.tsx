@@ -11,6 +11,7 @@ import CSVImportSheet from '@/components/CSVImportSheet'
 import { useAccounts } from '@/hooks/useAccounts'
 import { useRecurringItems } from '@/hooks/useRecurringItems'
 import { usePlannedItems } from '@/hooks/usePlannedItems'
+import { useCardPayments } from '@/hooks/useCardPayments'
 import { useProjection } from '@/hooks/useProjection'
 import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const { accounts, defaultAccount, loading: accountsLoading, updateBalance, createAccount, updateAccount } = useAccounts()
   const { items } = useRecurringItems()
   const { items: plannedItems } = usePlannedItems()
+  const { items: cardPayments } = useCardPayments()
   const { transactions, refetch: refetchTxns } = useTransactions(50)
   const { categories, rules } = useCategories()
   const { tags, getOrCreateTag, getAssignedTagIds } = useTransactionTags()
@@ -44,7 +46,7 @@ export default function DashboardPage() {
   const filteredRecurring = filterItemsByAccount(items, selectedAccount)
   const filteredPlanned = filterItemsByAccount(plannedItems, selectedAccount)
   const projectionBalance = selectedAccount?.balance ?? defaultAccount?.balance ?? null
-  const projection = useProjection(projectionBalance, filteredRecurring, filteredPlanned)
+  const projection = useProjection(projectionBalance, filteredRecurring, filteredPlanned, cardPayments, accounts)
 
   const [showImport, setShowImport] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
