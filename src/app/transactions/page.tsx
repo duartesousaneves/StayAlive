@@ -19,6 +19,7 @@ export default function TransactionsPage() {
   const { tags, getOrCreateTag, getAssignedTagIds } = useTransactionTags()
   const [showImport, setShowImport] = useState(false)
   const [assignedTagIds, setAssignedTagIds] = useState<string[]>([])
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
 
   const editModal = useTransactionEdit(refetch)
 
@@ -30,17 +31,21 @@ export default function TransactionsPage() {
     }
   }, [editModal.state.transaction?.id])
 
+  const filteredTransactions = selectedAccountId
+    ? transactions.filter(t => t.account_id === selectedAccountId)
+    : transactions
+
   const suggestions = useMemo(() => {
     if (!rules.length) return {}
     const map: Record<string, string> = {}
-    for (const t of transactions) {
+    for (const t of filteredTransactions) {
       if (!t.category_id) {
         const suggested = categorize(t.description, rules)
         if (suggested) map[t.id] = suggested
       }
     }
     return map
-  }, [transactions, rules])
+  }, [filteredTransactions, rules])
 
   async function acceptSuggestion(transactionId: string, categoryId: string) {
     const supabase = createClient()
@@ -90,8 +95,36 @@ export default function TransactionsPage() {
         </button>
       </div>
 
+      {accounts.length > 0 && (
+        <div className="flex gap-2 px-4 mb-4 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setSelectedAccountId(null)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              selectedAccountId === null
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            Todos
+          </button>
+          {accounts.map(account => (
+            <button
+              key={account.id}
+              onClick={() => setSelectedAccountId(account.id)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                selectedAccountId === account.id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600'
+              }`}
+            >
+              {account.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <TransactionList
-        transactions={transactions}
+        transactions={filteredTransactions}
         categories={categories}
         suggestions={suggestions}
         loading={loading}
