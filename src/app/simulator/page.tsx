@@ -20,6 +20,12 @@ const options = [
     label: 'Recorrente',
     description: 'Gerir despesas e rendimentos fixos',
   },
+  {
+    href: '/simulator/pagamento-cartao',
+    icon: '💳',
+    label: 'Pagamento de Cartão',
+    description: 'Agendar o pagamento de um cartão de crédito',
+  },
 ]
 
 export default function RegistarPage() {

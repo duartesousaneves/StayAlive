@@ -3,6 +3,13 @@ import type { Database } from './supabase/types'
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
 type PlannedItem = Database['public']['Tables']['planned_items']['Row']
 
+/** Pre-computed card payment for projection (effective amount already resolved). */
+export interface CardPaymentProjection {
+  planned_date: string
+  amount: number
+  active: boolean
+}
+
 export interface DayProjection {
   date: string // YYYY-MM-DD
   balance: number
@@ -81,6 +88,7 @@ export function computeProjection(
   currentBalance: number,
   recurringItems: RecurringItem[],
   plannedItems: PlannedItem[],
+  cardPayments: CardPaymentProjection[] = [],
   horizon = 30
 ): ProjectionResult {
   const today = new Date()
@@ -108,6 +116,15 @@ export function computeProjection(
       const sign = item.type === 'income' ? 1 : -1
       const key = item.planned_date
       cashflowMap.set(key, (cashflowMap.get(key) ?? 0) + sign * item.amount)
+    }
+  }
+
+  for (const payment of cardPayments) {
+    if (!payment.active) continue
+    const [year, month, day] = payment.planned_date.split('-').map(Number)
+    const paymentDate = new Date(year, month - 1, day)
+    if (paymentDate >= today && paymentDate <= end) {
+      cashflowMap.set(payment.planned_date, (cashflowMap.get(payment.planned_date) ?? 0) - payment.amount)
     }
   }
 
