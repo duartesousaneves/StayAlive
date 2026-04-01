@@ -15,13 +15,13 @@ import { extractKeyword } from '@/lib/keywords'
 export default function TransactionsPage() {
   const { transactions, loading, refetch } = useTransactions()
   const { categories, rules } = useCategories()
-  const { accounts } = useAccounts()
+  const { accounts, refetch: refetchAccounts } = useAccounts()
   const { tags, getOrCreateTag, getAssignedTagIds } = useTransactionTags()
   const [showImport, setShowImport] = useState(false)
   const [assignedTagIds, setAssignedTagIds] = useState<string[]>([])
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
 
-  const editModal = useTransactionEdit(refetch)
+  const editModal = useTransactionEdit(() => { refetch(); refetchAccounts() })
 
   useEffect(() => {
     if (editModal.state.transaction) {

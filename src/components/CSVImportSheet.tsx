@@ -17,7 +17,7 @@ interface Props {
 
 export default function CSVImportSheet({ onClose, onImported }: Props) {
   const { rules } = useCategories()
-  const { accounts, defaultAccount } = useAccounts()
+  const { accounts, defaultAccount, updateBalance } = useAccounts()
   const [step, setStep] = useState<ImportStep>('upload')
   const [headers, setHeaders] = useState<string[]>([])
   const [rawRows, setRawRows] = useState<Record<string, string>[]>([])
@@ -109,6 +109,14 @@ export default function CSVImportSheet({ onClose, onImported }: Props) {
 
     if (toInsert.length > 0) {
       await ((supabase.from('transactions') as any).insert(toInsert) as any)
+
+      if (selectedAccountId) {
+        const account = accounts.find(a => a.id === selectedAccountId)
+        if (account) {
+          const netAmount = toInsert.reduce((sum, t) => sum + t.amount, 0)
+          await updateBalance(selectedAccountId, account.balance + netAmount)
+        }
+      }
     }
 
     // Save mapping back to user_settings so future imports auto-skip mapping step

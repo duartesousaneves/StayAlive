@@ -24,7 +24,7 @@ import { extractKeyword } from '@/lib/keywords'
 import type { Account } from '@/hooks/useAccounts'
 
 export default function DashboardPage() {
-  const { accounts, defaultAccount, loading: accountsLoading, updateBalance, createAccount, updateAccount } = useAccounts()
+  const { accounts, defaultAccount, loading: accountsLoading, updateBalance, createAccount, updateAccount, refetch: refetchAccounts } = useAccounts()
   const { items } = useRecurringItems()
   const { items: plannedItems } = usePlannedItems()
   const { items: cardPayments } = useCardPayments()
@@ -53,7 +53,7 @@ export default function DashboardPage() {
   const [showAddAccount, setShowAddAccount] = useState(false)
   const [assignedTagIds, setAssignedTagIds] = useState<string[]>([])
 
-  const editModal = useTransactionEdit(refetchTxns)
+  const editModal = useTransactionEdit(() => { refetchTxns(); refetchAccounts() })
 
   // Load assigned tags when a transaction is opened for editing
   useEffect(() => {
