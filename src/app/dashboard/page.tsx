@@ -17,6 +17,8 @@ import { useTransactions } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
 import { useTransactionEdit } from '@/hooks/useTransactionEdit'
 import { useTransactionTags } from '@/hooks/useTransactionTags'
+import { useMatchReview } from '@/hooks/useMatchReview'
+import MatchReviewSheet from '@/components/MatchReviewSheet'
 import { filterItemsByAccount } from '@/lib/filterItemsByAccount'
 import { categorize } from '@/lib/categorize'
 import { createClient } from '@/lib/supabase/client'
@@ -43,14 +45,27 @@ export default function DashboardPage() {
     }
   }, [defaultAccount])
 
+  const accountTransactions = selectedAccount
+    ? transactions.filter(t => t.account_id === selectedAccount.id)
+    : transactions
+
   const filteredRecurring = filterItemsByAccount(items, selectedAccount)
   const filteredPlanned = filterItemsByAccount(plannedItems, selectedAccount)
   const projectionBalance = selectedAccount?.balance ?? defaultAccount?.balance ?? null
-  const projection = useProjection(projectionBalance, filteredRecurring, filteredPlanned, cardPayments, accounts)
+
+  const { pendingMatches, excludedOccurrences, confirm, dismiss } = useMatchReview(
+    items, plannedItems, cardPayments, accounts, accountTransactions, selectedAccount?.id ?? null
+  )
+
+  const projection = useProjection(
+    projectionBalance, filteredRecurring, filteredPlanned, cardPayments, accounts,
+    selectedAccount?.id ?? null, excludedOccurrences
+  )
 
   const [showImport, setShowImport] = useState(false)
   const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const [showAddAccount, setShowAddAccount] = useState(false)
+  const [showMatchReview, setShowMatchReview] = useState(false)
   const [assignedTagIds, setAssignedTagIds] = useState<string[]>([])
 
   const editModal = useTransactionEdit(() => { refetchTxns(); refetchAccounts() })
@@ -63,10 +78,6 @@ export default function DashboardPage() {
       setAssignedTagIds([])
     }
   }, [editModal.state.transaction?.id])
-
-  const accountTransactions = selectedAccount
-    ? transactions.filter(t => t.account_id === selectedAccount.id)
-    : transactions
 
   // Auto-suggestions: run categorize over uncategorised transactions
   const suggestions = useMemo(() => {
@@ -130,6 +141,19 @@ export default function DashboardPage() {
         onEditAccount={setEditingAccount}
         onAddAccount={() => setShowAddAccount(true)}
       />
+      {pendingMatches.length > 0 && (
+        <button
+          onClick={() => setShowMatchReview(true)}
+          className="mx-4 mb-2 w-full text-left px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl text-sm"
+        >
+          <span className="font-semibold text-amber-700">
+            {pendingMatches.length === 1
+              ? '1 transação possivelmente realizada'
+              : `${pendingMatches.length} transações possivelmente realizadas`}
+          </span>
+          <span className="text-amber-600"> — rever →</span>
+        </button>
+      )}
       <AlertBanner criticalDay={projection?.criticalDay ?? null} />
       {projection && (
         <ProjectionChart days={projection.days} criticalDay={projection.criticalDay} />
@@ -181,6 +205,15 @@ export default function DashboardPage() {
           account={editingAccount}
           onSave={data => updateAccount(editingAccount.id, data)}
           onClose={() => setEditingAccount(null)}
+        />
+      )}
+      {showMatchReview && pendingMatches.length > 0 && (
+        <MatchReviewSheet
+          matches={pendingMatches}
+          accounts={accounts}
+          onConfirm={key => { confirm(key); if (pendingMatches.length === 1) setShowMatchReview(false) }}
+          onDismiss={key => { dismiss(key); if (pendingMatches.length === 1) setShowMatchReview(false) }}
+          onClose={() => setShowMatchReview(false)}
         />
       )}
     </div>

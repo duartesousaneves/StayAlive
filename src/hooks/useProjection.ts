@@ -1,6 +1,6 @@
 'use client'
 import { useMemo } from 'react'
-import { computeProjection, computeSimulatedProjection, type ProjectionResult } from '@/lib/projection'
+import { computeProjection, computeSimulatedProjection, type ProjectionResult, type ExcludedOccurrences } from '@/lib/projection'
 import type { Database } from '@/lib/supabase/types'
 
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
@@ -13,25 +13,28 @@ export function useProjection(
   recurringItems: RecurringItem[],
   plannedItems: PlannedItem[],
   cardPayments: CardPayment[] = [],
-  accounts: Account[] = []
+  accounts: Account[] = [],
+  selectedAccountId: string | null = null,
+  excluded?: ExcludedOccurrences
 ): ProjectionResult | null {
   return useMemo(() => {
     if (balance === null) return null
     const cardProjections = cardPayments
       .filter(p => p.active)
+      .filter(p => p.source_account_id === selectedAccountId || p.credit_card_id === selectedAccountId)
       .map(p => {
-        let amount: number
-        if (p.amount !== null) {
-          amount = p.amount
-        } else {
-          const card = accounts.find(a => a.id === p.credit_card_id)
-          const debt = card ? Math.abs(Math.min(card.balance, 0)) : 0
-          amount = (p.percentage! / 100) * debt
-        }
-        return { planned_date: p.planned_date, amount, active: true }
+        const rawAmount = p.amount !== null
+          ? p.amount
+          : (() => {
+              const card = accounts.find(a => a.id === p.credit_card_id)
+              const debt = card ? Math.abs(Math.min(card.balance, 0)) : 0
+              return (p.percentage! / 100) * debt
+            })()
+        const sign = p.source_account_id === selectedAccountId ? -1 : 1
+        return { planned_date: p.planned_date, amount: sign * rawAmount, active: true, id: p.id }
       })
-    return computeProjection(balance, recurringItems, plannedItems, cardProjections)
-  }, [balance, recurringItems, plannedItems, cardPayments, accounts])
+    return computeProjection(balance, recurringItems, plannedItems, cardProjections, 30, excluded)
+  }, [balance, recurringItems, plannedItems, cardPayments, accounts, selectedAccountId, excluded])
 }
 
 export function useSimulatedProjection(
