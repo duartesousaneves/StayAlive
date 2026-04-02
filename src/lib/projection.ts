@@ -3,8 +3,13 @@ import type { Database } from './supabase/types'
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
 type PlannedItem = Database['public']['Tables']['planned_items']['Row']
 
-/** Pre-computed card payment for projection (effective amount already resolved). */
+/**
+ * Pre-computed card payment for projection (effective amount already resolved).
+ * `amount` is a signed net cashflow: negative = expense (source account),
+ * positive = income (credit card account — debt reduced).
+ */
 export interface CardPaymentProjection {
+  id?: string
   planned_date: string
   amount: number
   active: boolean
@@ -21,13 +26,19 @@ export interface ProjectionResult {
   criticalDay: string | null // first day balance < 0
 }
 
+export interface ExcludedOccurrences {
+  recurringDates: Map<string, Set<string>>  // itemId → Set of YYYY-MM-DD dates to skip
+  plannedIds: Set<string>                    // plannedItem IDs to skip entirely
+  cardPaymentIds: Set<string>                // card_payment_schedules IDs to skip
+}
+
 function addDays(date: Date, n: number): Date {
   const d = new Date(date)
   d.setDate(d.getDate() + n)
   return d
 }
 
-function toISODate(d: Date): string {
+export function toISODate(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
@@ -55,7 +66,7 @@ function nextOccurrence(from: Date, item: RecurringItem): Date {
   return d
 }
 
-function expandOccurrences(
+export function expandOccurrences(
   item: RecurringItem,
   today: Date,
   horizon: number
@@ -89,7 +100,8 @@ export function computeProjection(
   recurringItems: RecurringItem[],
   plannedItems: PlannedItem[],
   cardPayments: CardPaymentProjection[] = [],
-  horizon = 30
+  horizon = 30,
+  excluded?: ExcludedOccurrences
 ): ProjectionResult {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -102,14 +114,17 @@ export function computeProjection(
     if (!item.active) continue
     const sign = item.type === 'income' ? 1 : -1
     const dates = expandOccurrences(item, today, horizon)
+    const excludedDates = excluded?.recurringDates.get(item.id) ?? new Set<string>()
     for (const d of dates) {
       const key = toISODate(d)
+      if (excludedDates.has(key)) continue
       cashflowMap.set(key, (cashflowMap.get(key) ?? 0) + sign * item.amount)
     }
   }
 
   for (const item of plannedItems) {
     if (!item.active) continue
+    if (excluded?.plannedIds.has(item.id)) continue
     const [year, month, day] = item.planned_date.split('-').map(Number)
     const itemDate = new Date(year, month - 1, day)
     if (itemDate >= today && itemDate <= end) {
@@ -121,10 +136,11 @@ export function computeProjection(
 
   for (const payment of cardPayments) {
     if (!payment.active) continue
+    if (payment.id && excluded?.cardPaymentIds.has(payment.id)) continue
     const [year, month, day] = payment.planned_date.split('-').map(Number)
     const paymentDate = new Date(year, month - 1, day)
     if (paymentDate >= today && paymentDate <= end) {
-      cashflowMap.set(payment.planned_date, (cashflowMap.get(payment.planned_date) ?? 0) - payment.amount)
+      cashflowMap.set(payment.planned_date, (cashflowMap.get(payment.planned_date) ?? 0) + payment.amount)
     }
   }
 
