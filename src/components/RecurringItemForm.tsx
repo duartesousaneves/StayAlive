@@ -72,7 +72,7 @@ export default function RecurringItemForm({ categories, accounts, initialData, o
 
   async function handleSave() {
     const n = parseFloat(amount.replace(',', '.'))
-    if (!name.trim() || isNaN(n) || n <= 0) return
+    if (!name.trim() || isNaN(n) || n <= 0 || !accountId) return
 
     const dom = frequency === 'monthly' && dayOfMonth ? parseInt(dayOfMonth, 10) : null
     const computedNext = dom ? computeNextMonthlyDate(dom) : today
@@ -163,9 +163,9 @@ export default function RecurringItemForm({ categories, accounts, initialData, o
       <select
         value={accountId}
         onChange={e => setAccountId(e.target.value)}
-        className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+        className={`border rounded-lg px-3 py-2 text-sm ${!accountId ? 'border-red-300 text-gray-400' : 'border-gray-200 text-gray-900'}`}
       >
-        <option value="">Sem conta específica</option>
+        <option value="" disabled>Conta *</option>
         {accounts.map(a => (
           <option key={a.id} value={a.id}>{a.name}</option>
         ))}

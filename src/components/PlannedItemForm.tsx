@@ -54,7 +54,7 @@ export default function PlannedItemForm({ categories, accounts, initialData, isE
 
   async function handleSave() {
     const n = parseFloat(amount.replace(',', '.'))
-    if (!name.trim() || isNaN(n) || n <= 0 || !plannedDate) return
+    if (!name.trim() || isNaN(n) || n <= 0 || !plannedDate || !accountId) return
     setSaving(true)
     if (convertMode && onConvertToRecurring) {
       await onConvertToRecurring({
@@ -143,9 +143,9 @@ export default function PlannedItemForm({ categories, accounts, initialData, isE
       <select
         value={accountId}
         onChange={e => setAccountId(e.target.value)}
-        className="border border-gray-200 rounded-lg px-3 py-2 text-sm"
+        className={`border rounded-lg px-3 py-2 text-sm ${!accountId ? 'border-red-300 text-gray-400' : 'border-gray-200 text-gray-900'}`}
       >
-        <option value="">Sem conta específica</option>
+        <option value="" disabled>Conta *</option>
         {accounts.map(a => (
           <option key={a.id} value={a.id}>{a.name}</option>
         ))}
