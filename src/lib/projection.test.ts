@@ -85,4 +85,55 @@ describe('computeProjection', () => {
 
     expect(result.criticalDay).toBe(nextDate)
   })
+
+  it('skips a recurring occurrence on an excluded date', () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const in3Days = new Date(today)
+    in3Days.setDate(today.getDate() + 3)
+    const targetDate = `${in3Days.getFullYear()}-${String(in3Days.getMonth() + 1).padStart(2, '0')}-${String(in3Days.getDate()).padStart(2, '0')}`
+
+    const item = makeRecurring({ amount: 200, next_date: targetDate, day_of_month: in3Days.getDate() })
+    const excluded = {
+      recurringDates: new Map([['test-id', new Set([targetDate])]]),
+      plannedIds: new Set<string>(),
+      cardPaymentIds: new Set<string>(),
+    }
+    // Pass excluded; the occurrence on targetDate should be skipped
+    const result = computeProjection(500, [item], [], [], 30, excluded)
+    // The excluded date should have cashflow of 0 (skipped)
+    const targetDay = result.days.find(d => d.date === targetDate)
+    expect(targetDay?.cashflow).toBe(0)
+  })
+
+  it('skips a planned item whose id is in excludedPlannedIds', () => {
+    const planned: PlannedItem = {
+      id: 'pln-excl', user_id: 'u', name: 'Test', amount: 100, type: 'expense',
+      planned_date: new Date(new Date().getTime() + 86_400_000).toISOString().split('T')[0],
+      category_id: null, notes: null, active: true, created_at: '', account_id: null,
+    }
+    const excluded = {
+      recurringDates: new Map<string, Set<string>>(),
+      plannedIds: new Set(['pln-excl']),
+      cardPaymentIds: new Set<string>(),
+    }
+    const result = computeProjection(500, [], [planned], [], 30, excluded)
+    expect(result.days.every(d => d.cashflow === 0)).toBe(true)
+  })
+
+  it('skips a card payment whose id is in excludedCardPaymentIds', () => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(today.getDate() + 1)
+    const date = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+    const cardPayment = { planned_date: date, amount: -150, active: true, id: 'cp-excl' }
+    const excluded = {
+      recurringDates: new Map<string, Set<string>>(),
+      plannedIds: new Set<string>(),
+      cardPaymentIds: new Set(['cp-excl']),
+    }
+    const result = computeProjection(500, [], [], [cardPayment], 30, excluded)
+    expect(result.days.every(d => d.cashflow === 0)).toBe(true)
+  })
 })
