@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { categorize } from '@/lib/categorize'
 import type { Database } from '@/lib/supabase/types'
 
@@ -41,6 +41,13 @@ export default function ManualTransactionForm({
   const [categoryId, setCategoryId] = useState<string>('')
   const [userPickedCategory, setUserPickedCategory] = useState(false)
   const [date, setDate] = useState(today)
+
+  useEffect(() => {
+    setAccountId(prev => {
+      if (prev) return prev
+      return defaultAccountId ?? accounts[0]?.id ?? ''
+    })
+  }, [accounts, defaultAccountId])
 
   const filteredCategories = categories.filter(c => c.type === type)
 

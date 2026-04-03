@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeProjection } from './projection'
+import { computeProjection, toISODate } from './projection'
 import type { Database } from './supabase/types'
 
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
@@ -37,7 +37,7 @@ describe('computeProjection', () => {
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
     tomorrow.setDate(today.getDate() + 1)
-    const nextDate = tomorrow.toISOString().split('T')[0]
+    const nextDate = toISODate(tomorrow)
 
     const item = makeRecurring({ amount: 200, next_date: nextDate, day_of_month: tomorrow.getDate() })
     const result = computeProjection(500, [item], [], [], 30)
@@ -78,7 +78,7 @@ describe('computeProjection', () => {
     today.setHours(0, 0, 0, 0)
     const in2Days = new Date(today)
     in2Days.setDate(today.getDate() + 2)
-    const nextDate = in2Days.toISOString().split('T')[0]
+    const nextDate = toISODate(in2Days)
 
     const item = makeRecurring({ amount: 600, next_date: nextDate, day_of_month: in2Days.getDate() })
     const result = computeProjection(500, [item], [], [], 30)
