@@ -19,7 +19,9 @@ import { useTransactionEdit } from '@/hooks/useTransactionEdit'
 import { useTransactionTags } from '@/hooks/useTransactionTags'
 import { useMatchReview } from '@/hooks/useMatchReview'
 import MatchReviewSheet from '@/components/MatchReviewSheet'
+import HorizonSelector from '@/components/HorizonSelector'
 import { filterItemsByAccount } from '@/lib/filterItemsByAccount'
+import { HORIZON_LABELS, type ProjectionHorizon } from '@/lib/projection'
 import { categorize } from '@/lib/categorize'
 import { createClient } from '@/lib/supabase/client'
 import { extractKeyword } from '@/lib/keywords'
@@ -36,6 +38,7 @@ export default function DashboardPage() {
 
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
   const selectedAccountInitialized = useRef(false)
+  const [horizon, setHorizon] = useState<ProjectionHorizon>('30d')
 
   // Initialize selectedAccount once defaultAccount is loaded
   useEffect(() => {
@@ -44,6 +47,31 @@ export default function DashboardPage() {
       selectedAccountInitialized.current = true
     }
   }, [defaultAccount])
+
+  // Load per-account horizon from localStorage when selected account changes
+  useEffect(() => {
+    if (!selectedAccount) return
+    try {
+      const stored = localStorage.getItem('projection_horizon_by_account')
+      const map = stored ? JSON.parse(stored) as Record<string, ProjectionHorizon> : {}
+      setHorizon(map[selectedAccount.id] ?? '30d')
+    } catch {
+      setHorizon('30d')
+    }
+  }, [selectedAccount?.id])
+
+  function handleHorizonChange(h: ProjectionHorizon) {
+    setHorizon(h)
+    if (!selectedAccount) return
+    try {
+      const stored = localStorage.getItem('projection_horizon_by_account')
+      const map = stored ? JSON.parse(stored) as Record<string, ProjectionHorizon> : {}
+      map[selectedAccount.id] = h
+      localStorage.setItem('projection_horizon_by_account', JSON.stringify(map))
+    } catch {
+      // ignore
+    }
+  }
 
   const accountTransactions = selectedAccount
     ? transactions.filter(t => t.account_id === selectedAccount.id)
@@ -59,7 +87,7 @@ export default function DashboardPage() {
 
   const projection = useProjection(
     projectionBalance, filteredRecurring, filteredPlanned, cardPayments, accounts,
-    selectedAccount?.id ?? null, excludedOccurrences
+    selectedAccount?.id ?? null, excludedOccurrences, horizon
   )
 
   const [showImport, setShowImport] = useState(false)
@@ -154,9 +182,10 @@ export default function DashboardPage() {
           <span className="text-amber-600"> — rever →</span>
         </button>
       )}
+      <HorizonSelector value={horizon} onChange={handleHorizonChange} />
       <AlertBanner criticalDay={projection?.criticalDay ?? null} />
       {projection && (
-        <ProjectionChart days={projection.days} criticalDay={projection.criticalDay} />
+        <ProjectionChart days={projection.days} criticalDay={projection.criticalDay} horizonLabel={HORIZON_LABELS[horizon]} />
       )}
       <MonthSummary transactions={accountTransactions} accountName={selectedAccount?.name} onImportCSV={() => setShowImport(true)} />
       <RecentTransactions

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeProjection, toISODate } from './projection'
+import { computeProjection, resolveHorizon, toISODate } from './projection'
 import type { Database } from './supabase/types'
 
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
@@ -135,5 +135,30 @@ describe('computeProjection', () => {
     }
     const result = computeProjection(500, [], [], [cardPayment], 30, excluded)
     expect(result.days.every(d => d.cashflow === 0)).toBe(true)
+  })
+})
+
+describe('resolveHorizon', () => {
+  it('returns 30 for 30d', () => {
+    expect(resolveHorizon('30d')).toBe(30)
+  })
+
+  it('returns 90 for 90d', () => {
+    expect(resolveHorizon('90d')).toBe(90)
+  })
+
+  it('returns 180 for 180d', () => {
+    expect(resolveHorizon('180d')).toBe(180)
+  })
+
+  it('returns 365 for 365d', () => {
+    expect(resolveHorizon('365d')).toBe(365)
+  })
+
+  it('returns a non-negative integer for end-of-year', () => {
+    const days = resolveHorizon('end-of-year')
+    expect(days).toBeGreaterThanOrEqual(0)
+    expect(days).toBeLessThanOrEqual(365)
+    expect(Number.isInteger(days)).toBe(true)
   })
 })

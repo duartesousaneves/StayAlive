@@ -6,25 +6,28 @@ import type { DayProjection } from '@/lib/projection'
 interface Props {
   days: DayProjection[]
   criticalDay: string | null
+  horizonLabel: string
 }
 
-export default function ProjectionChart({ days, criticalDay }: Props) {
+export default function ProjectionChart({ days, criticalDay, horizonLabel }: Props) {
   const data = days.map(d => ({
     date: d.date,
     label: formatShortDate(d.date),
     balance: Math.round(d.balance * 100) / 100,
   }))
 
+  const xInterval = Math.max(1, Math.floor(data.length / 6))
+
   return (
     <div className="mx-4 mt-3 bg-white rounded-2xl p-4 shadow-sm">
-      <p className="text-sm font-semibold text-gray-700 mb-3">Projeção 30 dias</p>
+      <p className="text-sm font-semibold text-gray-700 mb-3">Projeção {horizonLabel}</p>
       <ResponsiveContainer width="100%" height={180}>
         <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <XAxis
             dataKey="label"
             tick={{ fontSize: 10, fill: '#9ca3af' }}
             tickLine={false}
-            interval={6}
+            interval={xInterval}
           />
           <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
           <Tooltip

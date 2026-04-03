@@ -1,6 +1,6 @@
 'use client'
 import { useMemo } from 'react'
-import { computeProjection, computeSimulatedProjection, type ProjectionResult, type ExcludedOccurrences } from '@/lib/projection'
+import { computeProjection, computeSimulatedProjection, resolveHorizon, type ProjectionResult, type ExcludedOccurrences, type ProjectionHorizon } from '@/lib/projection'
 import type { Database } from '@/lib/supabase/types'
 
 type RecurringItem = Database['public']['Tables']['recurring_items']['Row']
@@ -15,7 +15,8 @@ export function useProjection(
   cardPayments: CardPayment[] = [],
   accounts: Account[] = [],
   selectedAccountId: string | null = null,
-  excluded?: ExcludedOccurrences
+  excluded?: ExcludedOccurrences,
+  horizon: ProjectionHorizon = '30d'
 ): ProjectionResult | null {
   return useMemo(() => {
     if (balance === null) return null
@@ -33,8 +34,8 @@ export function useProjection(
         const sign = p.source_account_id === selectedAccountId ? -1 : 1
         return { planned_date: p.planned_date, amount: sign * rawAmount, active: true, id: p.id }
       })
-    return computeProjection(balance, recurringItems, plannedItems, cardProjections, 30, excluded)
-  }, [balance, recurringItems, plannedItems, cardPayments, accounts, selectedAccountId, excluded])
+    return computeProjection(balance, recurringItems, plannedItems, cardProjections, resolveHorizon(horizon), excluded)
+  }, [balance, recurringItems, plannedItems, cardPayments, accounts, selectedAccountId, excluded, horizon])
 }
 
 export function useSimulatedProjection(

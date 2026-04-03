@@ -162,6 +162,27 @@ export function computeProjection(
   return { days, criticalDay }
 }
 
+export type ProjectionHorizon = '30d' | '90d' | '180d' | '365d' | 'end-of-year'
+
+export const HORIZON_LABELS: Record<ProjectionHorizon, string> = {
+  '30d': '30 dias',
+  '90d': '90 dias',
+  '180d': '180 dias',
+  '365d': '365 dias',
+  'end-of-year': 'Fim do ano',
+}
+
+export function resolveHorizon(horizon: ProjectionHorizon): number {
+  if (horizon === 'end-of-year') {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const endOfYear = new Date(today.getFullYear(), 11, 31)
+    return Math.max(Math.round((endOfYear.getTime() - today.getTime()) / 86400000), 0)
+  }
+  const days: Record<string, number> = { '30d': 30, '90d': 90, '180d': 180, '365d': 365 }
+  return days[horizon]
+}
+
 export function computeSimulatedProjection(
   projection: ProjectionResult,
   spendAmount: number
