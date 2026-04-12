@@ -5,7 +5,7 @@ Dashboard com análise de dados via CSV.
 
 ## Stack
 - Next.js 14 + React 18 + TypeScript
-- Supabase (project ID: [verificar .env.local])
+- Supabase (project ID: xgbbgrttqtmrnytaspxk)
 - Recharts + papaparse + Vitest
 - Vercel (deploy via GitHub)
 
