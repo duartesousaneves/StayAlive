@@ -25,3 +25,4 @@ Dashboard com análise de dados via CSV.
 
 ## Links
 - GitHub: https://github.com/duartesousaneves/StayAlive
+- Deploy: https://stayalive.vercel.app
